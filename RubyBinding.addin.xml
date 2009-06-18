@@ -1,0 +1,165 @@
+<Addin id          = "RubyBinding"
+       namespace   = "MonoDevelop"
+       name		   = "Ruby Language Binding"
+       author      = "Levi Bard"
+       copyright   = "MIT/X11"
+       url         = "http://www.monodevelop.com"
+       description = "Ruby Language binding"
+       category    = "Language bindings"
+       version     = "2.1.0">
+
+	<Dependencies>
+		<Addin id = "Core" version = "2.1.0"/>
+		<Addin id = "Core.Gui" version = "2.1.0"/>
+		<Addin id = "Projects" version = "2.1.0"/>
+		<Addin id = "Projects.Gui" version = "2.1.0"/>
+		<Addin id = "Ide" version = "2.1.0"/>
+		<Addin id = "Components" version = "2.1.0"/>
+		<Addin id = "Deployment" version = "2.1.0"/>
+		<Addin id = "Deployment.Linux" version = "2.1.0"/>
+		<Addin id = "Autotools" version = "2.1.0"/>
+	</Dependencies>
+	
+	<Extension path = "/MonoDevelop/Core/StockIcons">
+		<StockIcon stockid = "md-union" resource = "Icons.16x16.Union"/>
+		<StockIcon stockid = "md-protected-union" resource = "Icons.16x16.ProtectedUnion"/>
+		<StockIcon stockid = "md-private-union" resource = "Icons.16x16.PrivateUnion"/>
+		<StockIcon stockid = "md-ruby-file" resource = "text-x-ruby.16x16.png" />
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/Ide/FileFilters">
+		<FileFilter
+			id = "Ruby"
+			insertbefore = "AllFiles"
+			_label = "Ruby Files"
+			extensions = "*.rb" />
+	</Extension>
+
+	<Extension path = "/MonoDevelop/Ide/FileTemplates">
+		<FileTemplate id = "EmptyRubySourceFile" resource = "MonoDevelop.RubyBinding.templates.EmptyRubySourceFile.xft.xml"/>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/Ide/ProjectTemplates">
+		<ProjectTemplate id = "ConsoleRubyProject" resource = "MonoDevelop.RubyBinding.templates.ConsoleRubyProject.xpt.xml"/>
+		<ProjectTemplate id = "EmptyRubyProject" resource = "MonoDevelop.RubyBinding.templates.EmptyRubyProject.xpt.xml"/>
+		<ProjectTemplate id = "RubyTestFixture" resource = "MonoDevelop.RubyBinding.templates.RubyTestFixture.xpt.xml"/>
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/Core/MimeTypes">
+		<MimeType id="text/x-ruby" icon="md-ruby-file">
+			<File pattern="*.rb" />
+		</MimeType>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/ProjectModel/ProjectBindings">
+		<ProjectBinding id = "RubyProject" class = "MonoDevelop.RubyBinding.RubyProjectBinding"/>
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/ProjectModel/LanguageBindings">
+		<LanguageBinding
+			id = "Ruby"
+		    supportedextensions = ".rb" 
+		    class = "MonoDevelop.RubyBinding.RubyLanguageBinding"/>
+    </Extension>
+    
+	<Extension path = "/MonoDevelop/Ide/GlobalOptionsDialog/Other">
+		<Section
+			id = "RubyBindingOptions"
+			_label = "Ruby"
+			class = "MonoDevelop.RubyBinding.GeneralOptionsPanelBinding"/>
+	</Extension>
+
+	<!-- 
+	<Extension path = "/MonoDevelop/ProjectModel/Gui/ItemOptionPanels/Build">
+		<Condition id = "ItemType" value = "MonoDevelop.RubyBinding.RubyProject">
+			<Section
+				id = "CodeGenerationPanel"
+			    _label = "Code Generation"
+			    insertafter = "Compile"
+			    class = "MonoDevelop.RubyBinding.CodeGenerationPanelBinding"/>
+			<Section
+				id = "OutputOptionsPanel"
+			    _label = "Output"
+			    class = "MonoDevelop.RubyBinding.OutputOptionsPanelBinding"/>
+		</Condition>
+	</Extension>
+
+	<ExtensionPoint path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackagesFolderNode" name = "Packages folder context menu">
+		<Description>Context menu for packages folder in the solution pad.</Description>
+		<ExtensionNodeSet id = "MonoDevelop.Components.Commands.ItemSet"/>
+	</ExtensionPoint>
+	
+	<ExtensionPoint path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackageNode" name = "ProjectPackage context menu">
+		<Description>Context menu for a package in the solution pad.</Description>
+		<ExtensionNodeSet id = "MonoDevelop.Components.Commands.ItemSet"/>
+	</ExtensionPoint>
+	-->
+
+		<!-- 
+	<Extension path = "/MonoDevelop/Ide/Pads/ProjectPad">
+		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectReferencesExtension" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectReferencesExtension"/>
+		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackagesFolderNodeBuilder" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackagesFolderNodeBuilder"/>
+		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackageNodeBuilder" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackageNodeBuilder"/>
+		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectNodeExtension" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectNodeExtension"/>
+	</Extension>
+	-->
+	
+	<!-- 
+	<Extension path = "/MonoDevelop/Ide/Pads/ClassPad">
+		<NodeBuilder id = "MonoDevelop.RubyBinding.Navigation.ProjectNodeBuilderExtension" class = "MonoDevelop.RubyBinding.Navigation.ProjectNodeBuilderExtension"/>
+		<NodeBuilder id = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder" class = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder"/>
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/Ide/Commands">
+		<Category _name = "Ruby" id = "Ruby">
+			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.UpdateClassPad" _label = "Update class pad" icon = "res:update" />
+			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.AddPackage" _label = "Edit Packages..." />
+			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.ShowPackageDetails" _label = "Details..." />
+		</Category>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackagesFolderNode">
+		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.AddPackage"/>
+		<CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Paste"/>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/Ide/ContextMenu/ClassPad/Project">
+		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.UpdateClassPad"/>
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackageNode">
+		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.ShowPackageDetails"/>
+		<SeparatorItem id = "Separator1" />
+		<CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Copy"/>
+		<CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Delete"/>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/Ide/TextEditorExtensions">
+		<Class class = "MonoDevelop.RubyBinding.RubyTextEditorExtension" />
+	</Extension>
+	-->
+
+	<Extension path = "/MonoDevelop/ProjectModel/ProjectServiceExtensions">
+		<Class id = "ExtraSteps" class = "MonoDevelop.RubyBinding.RubyProjectServiceExtension"/>
+	</Extension>
+
+	<Extension path = "/MonoDevelop/ProjectModel/SerializableClasses">
+		<DataType class = "MonoDevelop.RubyBinding.RubyProjectConfiguration"/>
+		<DataType class = "MonoDevelop.RubyBinding.RubyProject"/>
+		<!-- 
+		<DataType class = "MonoDevelop.RubyBinding.RubyCompilationParameters"/>
+		<DataType class = "MonoDevelop.RubyBinding.RubyCompiler"/>
+		<DataType class = "MonoDevelop.RubyBinding.ProjectPackage"/>
+		-->
+	</Extension>
+	
+	<!-- 
+	<Extension path = "/MonoDevelop/Autotools/MakefileHandlers">
+		<Class class = "MonoDevelop.RubyBinding.MakefileHandler"/>
+	</Extension>
+	
+	<Extension path = "/MonoDevelop/ProjectModel/DomParser">
+		<Class class = "MonoDevelop.RubyBinding.Parser.RubyDocumentParser" id = "RubyDocumentParser" />
+	</Extension>
+	-->
+</Addin>

@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RubyBinding", "RubyBinding.csproj", "{05BDA4C0-5EAD-4568-93C0-FF57400CB927}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = RubyBinding.csproj
+	EndGlobalSection
+EndGlobal

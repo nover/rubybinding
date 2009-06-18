@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Template
+	originator   = "Levi Bard"
+    created      = "06/13/2009"
+    lastModified = "06/13/2009">
+	
+	<!-- Template Header -->
+	<TemplateConfiguration>
+		<_Name>Empty Ruby Project</_Name>
+		<_Category>Ruby</_Category>
+		<Icon>md-project|res:ruby-icon-32.png</Icon>
+		<LanguageName>Ruby</LanguageName>
+		<_Description>Creates an empty Ruby solution.</_Description>
+	</TemplateConfiguration>
+	
+	<!-- Template Content -->
+	<Combine name = "${ProjectName}" directory = ".">
+		<Project name = "${ProjectName}" directory = "." type = "Ruby">
+			<Options
+				PauseConsoleOutput = "True"
+				/>
+		</Project>
+	</Combine>
+</Template>

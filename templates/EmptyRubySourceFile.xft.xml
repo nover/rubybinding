@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Template
+	Originator="Levi Bard"
+	Language="Ruby"
+	Created="06/13/2009"
+	LastModified="06/13/2009">
+	
+	<TemplateConfiguration>
+		<_Name>Empty Ruby Source File</_Name>
+		<Icon>res:text-x-ruby.32x32.png</Icon>
+		<_Category>General</_Category>
+		<LanguageName>Ruby</LanguageName>
+		<_Description>Creates an empty Ruby source file.</_Description>
+	</TemplateConfiguration>
+	
+	<TemplateFiles>
+		<File DefaultExtension=".rb" DefaultName="EmptyRubySourceFile"/>
+	</TemplateFiles>
+	
+	<FileOptions/>
+	
+</Template>

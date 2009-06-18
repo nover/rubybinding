@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<Template
+	originator   = "Levi Bard"
+    created      = "06/13/2009"
+    lastModified = "06/13/2009">
+	
+	<!-- Template Header -->
+	<TemplateConfiguration>
+		<_Name>Console Project</_Name>
+		<_Category>Ruby</_Category>
+		<Icon>md-project-console|res:ruby-icon-32.png</Icon>
+		<LanguageName>Ruby</LanguageName>
+		<_Description>Creates a simple hello world Ruby project.</_Description>
+	</TemplateConfiguration>
+	
+	<!-- Template Content -->
+	<Combine name = "${ProjectName}" directory = ".">
+		<Project name = "${ProjectName}" directory = "." type = "Ruby">
+			<Options PauseConsoleOutput = "True" />
+			
+			<Files>
+				<File name = "main.rb"><![CDATA[# created on ${Date} at ${Time}
+
+if(__FILE__ == $0)
+	puts('Hello world!')
+end
+}]]></File>
+			</Files>
+		</Project>
+	</Combine>
+</Template>

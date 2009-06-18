@@ -8,7 +8,7 @@
 	<TemplateConfiguration>
 		<_Name>Empty Ruby Project</_Name>
 		<_Category>Ruby</_Category>
-		<Icon>md-project|res:ruby-icon-32.png</Icon>
+		<Icon>md-project|res:MonoDevelop.RubyBinding.icons.ruby-icon-32.png</Icon>
 		<LanguageName>Ruby</LanguageName>
 		<_Description>Creates an empty Ruby solution.</_Description>
 	</TemplateConfiguration>

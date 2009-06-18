@@ -21,10 +21,7 @@
 	</Dependencies>
 	
 	<Extension path = "/MonoDevelop/Core/StockIcons">
-		<StockIcon stockid = "md-union" resource = "Icons.16x16.Union"/>
-		<StockIcon stockid = "md-protected-union" resource = "Icons.16x16.ProtectedUnion"/>
-		<StockIcon stockid = "md-private-union" resource = "Icons.16x16.PrivateUnion"/>
-		<StockIcon stockid = "md-ruby-file" resource = "text-x-ruby.16x16.png" />
+		<StockIcon stockid = "md-ruby-file" resource = "MonoDevelop.RubyBinding.icons.text-x-ruby.16x16.png" />
 	</Extension>
 	
 	<Extension path = "/MonoDevelop/Ide/FileFilters">

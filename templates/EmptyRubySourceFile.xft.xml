@@ -7,7 +7,7 @@
 	
 	<TemplateConfiguration>
 		<_Name>Empty Ruby Source File</_Name>
-		<Icon>res:text-x-ruby.32x32.png</Icon>
+		<Icon>res:MonoDevelop.RubyBinding.icons.text-x-ruby.32x32.png</Icon>
 		<_Category>General</_Category>
 		<LanguageName>Ruby</LanguageName>
 		<_Description>Creates an empty Ruby source file.</_Description>

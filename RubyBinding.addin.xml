@@ -59,14 +59,25 @@
 		    class = "MonoDevelop.RubyBinding.RubyLanguageBinding"/>
     </Extension>
     
+	<!-- 
 	<Extension path = "/MonoDevelop/Ide/GlobalOptionsDialog/Other">
 		<Section
 			id = "RubyBindingOptions"
 			_label = "Ruby"
 			class = "MonoDevelop.RubyBinding.GeneralOptionsPanelBinding"/>
 	</Extension>
+	-->
 
-	<!-- 
+	<Extension path = "/MonoDevelop/ProjectModel/Gui/ItemOptionPanels/Run">
+		<Condition id = "ItemType" value = "MonoDevelop.RubyBinding.RubyProject">
+			<Section
+			    id = "GeneralOptionsPanel"
+			    _label = "General"
+			    class = "MonoDevelop.RubyBinding.GeneralOptionsPanelBinding"/>
+		</Condition>
+	</Extension>
+
+		<!-- 
 	<Extension path = "/MonoDevelop/ProjectModel/Gui/ItemOptionPanels/Build">
 		<Condition id = "ItemType" value = "MonoDevelop.RubyBinding.RubyProject">
 			<Section
@@ -78,9 +89,10 @@
 				id = "OutputOptionsPanel"
 			    _label = "Output"
 			    class = "MonoDevelop.RubyBinding.OutputOptionsPanelBinding"/>
-		</Condition>
 	</Extension>
+		-->
 
+	<!-- 
 	<ExtensionPoint path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackagesFolderNode" name = "Packages folder context menu">
 		<Description>Context menu for packages folder in the solution pad.</Description>
 		<ExtensionNodeSet id = "MonoDevelop.Components.Commands.ItemSet"/>
@@ -92,7 +104,7 @@
 	</ExtensionPoint>
 	-->
 
-		<!-- 
+	<!-- 
 	<Extension path = "/MonoDevelop/Ide/Pads/ProjectPad">
 		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectReferencesExtension" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectReferencesExtension"/>
 		<NodeBuilder id = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackagesFolderNodeBuilder" class = "MonoDevelop.RubyBinding.ProjectPad.ProjectPackagesFolderNodeBuilder"/>

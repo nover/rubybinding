@@ -15,6 +15,21 @@ Global
 		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
+		version = 0.1
 		StartupItem = RubyBinding.csproj
+		Policies = $0
+		$0.TextStylePolicy = $1
+		$1.FileWidth = 120
+		$1.TabWidth = 4
+		$1.inheritsSet = Mono
+		$1.inheritsScope = text/plain
+		$1.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $2
+		$2.MethodBraceStyle = EndOfLine
+		$2.ConstructorBraceStyle = EndOfLine
+		$2.DestructorBraceStyle = EndOfLine
+		$2.inheritsSet = Mono
+		$2.inheritsScope = text/x-csharp
+		$2.scope = text/x-csharp
 	EndGlobalSection
 EndGlobal

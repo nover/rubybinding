@@ -56,6 +56,15 @@ namespace MonoDevelop.RubyBinding
 			if (info != null) {
 				Name = info.ProjectName;
 			}
+			Configurations.Add (CreateConfiguration ("Default"));
+			
+		}
+		
+		public override SolutionItemConfiguration CreateConfiguration (string name)
+		{
+			RubyProjectConfiguration conf = new RubyProjectConfiguration ();
+			conf.Name = name;
+			return conf;
 		}
 		
 		public override bool IsCompileable (string fileName)
@@ -66,9 +75,6 @@ namespace MonoDevelop.RubyBinding
 		protected override bool OnGetCanExecute (MonoDevelop.Projects.ExecutionContext context, string solutionConfiguration)
 		{
 			return true;
-//			System.Diagnostics.Process p = System.Diagnostics.Process.Start (RubyLanguageBinding.RubyInterpreter, "--version");
-//			p.WaitForExit (5000);
-//			return (0 == p.ExitCode);
 		}
 		
 		protected override void DoExecute (IProgressMonitor monitor,
@@ -82,11 +88,6 @@ namespace MonoDevelop.RubyBinding
 			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile);
 			
 			monitor.Log.WriteLine ("Running project...");
-			
-			if (conf.ExternalConsole)
-				console = context.ExternalConsoleFactory.CreateConsole (!pause);
-			else
-				console = context.ConsoleFactory.CreateConsole (!pause);
 			
 			AggregatedOperationMonitor operationMonitor = new AggregatedOperationMonitor (monitor);
 			

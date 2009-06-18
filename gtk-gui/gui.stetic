@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<stetic-interface>
+  <configuration>
+    <images-root-path>..</images-root-path>
+    <target-gtk-version>2.12</target-gtk-version>
+  </configuration>
+  <import>
+    <widget-library name="MonoDevelop.Ide, Version=2.1.0.0, Culture=neutral" />
+    <widget-library name="../bin/Debug/RubyBinding.dll" internal="true" />
+    <widget-library name="../../svn-repos/monodevelop/main/build/bin/MonoDevelop.Core.Gui.dll" />
+    <widget-library name="../../svn-repos/monodevelop/main/build/bin/MonoDevelop.Projects.Gui.dll" />
+  </import>
+  <widget class="Gtk.Bin" id="MonoDevelop.RubyBinding.GeneralOptionsPanel" design-size="300 300">
+    <property name="MemberName" />
+    <property name="WidthRequest">0</property>
+    <property name="HeightRequest">0</property>
+    <property name="Visible">False</property>
+    <property name="Sensitive">False</property>
+    <child>
+      <widget class="Gtk.HBox" id="hbox3">
+        <property name="MemberName" />
+        <property name="Spacing">6</property>
+        <child>
+          <widget class="Gtk.Label" id="label2">
+            <property name="MemberName" />
+            <property name="LabelProp" translatable="yes">Startup File</property>
+            <property name="Justify">Right</property>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ComboBox" id="projectFilesCB">
+            <property name="MemberName">projectFilesCB</property>
+            <property name="IsTextCombo">True</property>
+            <property name="Items" translatable="yes" />
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+</stetic-interface>

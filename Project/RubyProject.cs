@@ -87,7 +87,7 @@ namespace MonoDevelop.RubyBinding
 			
 			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile);
 			
-			monitor.Log.WriteLine ("Running project...");
+			monitor.Log.WriteLine ("Running {0} {1}", RubyLanguageBinding.RubyInterpreter, conf.MainFile);
 			
 			AggregatedOperationMonitor operationMonitor = new AggregatedOperationMonitor (monitor);
 			

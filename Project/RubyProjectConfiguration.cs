@@ -10,5 +10,12 @@ namespace MonoDevelop.RubyBinding
 	{
 		[ItemProperty("MainFile")]
 		public string MainFile{ get; set; }
+		
+		public override void CopyFrom (ItemConfiguration configuration)
+		{
+			base.CopyFrom (configuration);
+			RubyProjectConfiguration conf = (RubyProjectConfiguration)configuration;
+			MainFile = conf.MainFile;
+		}
 	}
 }

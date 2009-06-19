@@ -1,5 +1,5 @@
 //
-// ValaLanguageBinding.cs
+// RubyLanguageBinding.cs
 //
 // Authors:
 //  Levi Bard <taktaktaktaktaktaktaktaktaktak@gmail.com> 

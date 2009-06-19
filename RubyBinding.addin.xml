@@ -72,7 +72,7 @@
 		<Condition id = "ItemType" value = "MonoDevelop.RubyBinding.RubyProject">
 			<Section
 			    id = "GeneralOptionsPanel"
-			    _label = "General"
+			    _label = "Startup"
 			    class = "MonoDevelop.RubyBinding.GeneralOptionsPanelBinding"/>
 		</Condition>
 	</Extension>

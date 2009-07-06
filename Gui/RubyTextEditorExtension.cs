@@ -31,6 +31,7 @@
 using System;
 using System.IO;
 
+using MonoDevelop.Core.Gui;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.Ide.Gui.Content;
 using MonoDevelop.Projects.Gui.Completion;
@@ -46,7 +47,26 @@ namespace MonoDevelop.RubyBinding
 		
 		public override ICompletionDataList HandleCodeCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
-			return null;
+			Console.WriteLine ("RubyBinding: HandleCodeCompletion: '{0}'", completionChar);
+			
+			CompletionDataList cdl = new CompletionDataList ();
+			if ('.' == completionChar) {
+				string contents = Editor.Text,
+				       symbol = GetSymbol (contents, completionContext);
+				Console.WriteLine ("RubyBinding: Completing {0}", symbol);
+				if (!string.IsNullOrEmpty (symbol)) {
+					Gtk.Application.Invoke (delegate (object o, EventArgs a){ 
+						string[] completions = RubyCompletion.Complete (contents, symbol, completionContext.TriggerLine-1);
+						if (null != completions) {
+							Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
+							foreach (string completion in completions) {
+								cdl.Add (completion, Stock.Method);
+							}
+						}
+					});
+				}
+			}
+			return cdl;
 		}
 		
 		public override ICompletionDataList CodeCompletionCommand (ICodeCompletionContext completionContext)
@@ -57,6 +77,26 @@ namespace MonoDevelop.RubyBinding
 		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
 			return null;
+		}
+		
+		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '"', '\\', '\'', '`', '>', '<', '=', ';', '|', '&', '{', '(' };
+		private static string GetSymbol (string contents, ICodeCompletionContext context)
+		{
+			if (string.IsNullOrEmpty (contents) || 0 == context.TriggerOffset) { 
+				Console.WriteLine ("RubyBinding: Empty contents or zero trigger offset {0}", context.TriggerOffset);
+				return string.Empty; 
+			}
+			
+			int start = contents.LastIndexOfAny (wordBreakChars, context.TriggerOffset-1)+1,
+			    end = contents.IndexOfAny (wordBreakChars, context.TriggerOffset-1)-1;
+			
+			if (0 > start){ start = 0; }
+			if (0 > end){ end = contents.Length; }
+			if (end < start){ end = start; }
+			
+			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
+			
+			return contents.Substring (start, end-start);
 		}
 	}
 }

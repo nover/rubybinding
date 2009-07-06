@@ -65,6 +65,8 @@
     <Compile Include="gtk-gui\generated.cs" />
     <Compile Include="Gui\GeneralOptionsPanel.cs" />
     <Compile Include="gtk-gui\MonoDevelop.RubyBinding.GeneralOptionsPanel.cs" />
+    <Compile Include="Gui\RubyCompletion.cs" />
+    <Compile Include="Gui\RubyTextEditorExtension.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

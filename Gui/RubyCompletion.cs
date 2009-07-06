@@ -1,4 +1,3 @@
-//
 // RubyCompletion.cs
 //
 // Authors:
@@ -30,6 +29,9 @@
 
 
 using System;
+using System.Text;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace MonoDevelop.RubyBinding
 {
@@ -50,5 +52,88 @@ namespace MonoDevelop.RubyBinding
 		 * Operator - (list)
 		 * Variables/method calls/everything elsse
 #endif
-	}
+		static RubyCompletion () {
+			ruby_init ();
+		}
+
+		public static string[] Complete (string contents, string symbol, int line)
+		{
+			int runstatus = 0;
+			StringBuilder sb = new StringBuilder ();
+			List<string> lines = new List<string> (contents.Split ('\n'));
+			completions = new List<string> ();
+			Console.WriteLine ("Replacing {0} with checker", lines[line]);
+			lines.Insert (line, string.Format ("$md_completions = {0}.methods", symbol));
+			lines.RemoveAt (line+1);
+			
+			foreach (string linestr in lines) {
+				sb.AppendLine (linestr);
+			}
+			sb.AppendFormat ("$md_completions");
+			
+			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
+			if (0 != runstatus) {
+				Console.WriteLine ("Evaluation failed: {0}", runstatus);
+				return null;
+			}
+			
+			rb_iterate (IterateCompletions, raw_completions, AddCompletion, IntPtr.Zero);
+			// Console.WriteLine (string.Join (Environment.NewLine, completions.ToArray ()));
+			
+			return completions.ToArray ();
+		}// Complete
+		
+		public static List<string> completions;
+		
+		public static IntPtr AddCompletion (IntPtr completion, IntPtr extra)
+		{
+			string blah = rb_string_value_cstr (ref completion);
+//			Console.WriteLine ("Adding completion '{0}'", blah);
+			completions.Add (blah);
+			return IntPtr.Zero;
+		}// AddCompletion
+		
+		public static IntPtr IterateCompletions (IntPtr collection)
+		{
+//			Console.WriteLine ("Iterating completions");
+			return rb_funcall(collection, rb_intern("each"), 0);
+		}// IterateCompletions
+		
+		public delegate IntPtr RubyFunction (IntPtr arguments);
+		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_each (IntPtr collection);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_rescue (RubyFunction function, IntPtr arguments, RubyFunction exception_handler, IntPtr handler_arguments);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_gv_get (string variable_name);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_eval_string_wrap (string eval_text, ref int status);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
+		
+		[DllImport("ruby1.8")]
+		public static extern string rb_string_value_cstr (ref IntPtr rb_string);
+		
+		[DllImport("ruby1.8")]
+		public static extern void ruby_init ();
+		
+		[DllImport("ruby1.8")]
+		public static extern void ruby_init_stack ();
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_intern (string symbol);
+		
+	}// RubyCompletion
 }

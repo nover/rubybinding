@@ -30,8 +30,12 @@
 
 using System;
 using System.Text;
+using System.Threading;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+using MonoDevelop.Core.Gui;
+using MonoDevelop.Projects.Gui.Completion;
 
 namespace MonoDevelop.RubyBinding
 {
@@ -56,48 +60,61 @@ namespace MonoDevelop.RubyBinding
 			ruby_init ();
 		}
 
-		public static string[] Complete (string contents, string symbol, int line)
+		static Dictionary<string,string> icons = new Dictionary<string,string> {
+			{ "method", Stock.Method },
+			{ "constant", Stock.Literal }
+		};
+		
+		public static ICompletionData[] Complete (string contents, string symbol, int line)
 		{
+			ICompletionData[] rv = null;
+			
 			int runstatus = 0;
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
-			completions = new List<string> ();
-			Console.WriteLine ("Replacing {0} with checker", lines[line]);
-			lines.Insert (line, string.Format ("$md_completions = {0}.methods", symbol));
+			
+			completions = new List<ICompletionData> ();
+			lines.Insert (line, string.Format ("$md_completions = {0}.methods.collect{{|m| [m,{1}]}} + {0}.class.constants.collect{{|c| [c,{2}]}}", symbol, "'method'", "'constant'"));
+			Console.WriteLine ("Replacing {0} with {1}", lines[line+1], lines[line]);
 			lines.RemoveAt (line+1);
 			
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
 			sb.AppendFormat ("$md_completions");
-			
+		
 			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
-				return null;
+				return new ICompletionData[0];
 			}
 			
 			rb_iterate (IterateCompletions, raw_completions, AddCompletion, IntPtr.Zero);
-			// Console.WriteLine (string.Join (Environment.NewLine, completions.ToArray ()));
+			rv = completions.ToArray ();
+			Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
 			
-			return completions.ToArray ();
+			return rv;
 		}// Complete
 		
-		public static List<string> completions;
+		public static List<ICompletionData> completions;
 		
 		public static IntPtr AddCompletion (IntPtr completion, IntPtr extra)
 		{
-			string blah = rb_string_value_cstr (ref completion);
-//			Console.WriteLine ("Adding completion '{0}'", blah);
-			completions.Add (blah);
+			string name = FromRubyString (rb_ary_entry (completion, 0));
+			string itemtype = FromRubyString (rb_ary_entry (completion, 1));
+			completions.Add (new CompletionData (name, icons[itemtype], name, name));
 			return IntPtr.Zero;
 		}// AddCompletion
 		
 		public static IntPtr IterateCompletions (IntPtr collection)
 		{
-//			Console.WriteLine ("Iterating completions");
 			return rb_funcall(collection, rb_intern("each"), 0);
 		}// IterateCompletions
+		
+		static string FromRubyString (IntPtr rubyval)
+		{
+			return Marshal.PtrToStringAuto (rb_string_value_cstr (ref rubyval));
+		}
 		
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
@@ -121,7 +138,7 @@ namespace MonoDevelop.RubyBinding
 		public static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
 		
 		[DllImport("ruby1.8")]
-		public static extern string rb_string_value_cstr (ref IntPtr rb_string);
+		public static extern IntPtr rb_string_value_cstr (ref IntPtr rb_string);
 		
 		[DllImport("ruby1.8")]
 		public static extern void ruby_init ();
@@ -134,6 +151,9 @@ namespace MonoDevelop.RubyBinding
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_intern (string symbol);
+		
+		[DllImport("ruby1.8")]
+		public static extern IntPtr rb_ary_entry (IntPtr array, int index);
 		
 	}// RubyCompletion
 }

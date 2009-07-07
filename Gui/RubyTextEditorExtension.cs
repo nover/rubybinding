@@ -55,22 +55,23 @@ namespace MonoDevelop.RubyBinding
 				       symbol = GetSymbol (contents, completionContext);
 				Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
-					Gtk.Application.Invoke (delegate (object o, EventArgs a){ 
-						string[] completions = RubyCompletion.Complete (contents, symbol, completionContext.TriggerLine-1);
-						if (null != completions) {
-							Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
-							foreach (string completion in completions) {
-								cdl.Add (completion, Stock.Method);
-							}
-						}
-					});
+					ICompletionData[] completions = RubyCompletion.Complete (contents, symbol, completionContext.TriggerLine-1);
+					if (null != completions) {
+						Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
+						cdl.AddRange (completions);
+					}
 				}
 			}
+			Console.WriteLine ("RubyBinding: Returning {0} completions", cdl.Count);
 			return cdl;
 		}
 		
 		public override ICompletionDataList CodeCompletionCommand (ICodeCompletionContext completionContext)
 		{
+			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
+				int pos = completionContext.TriggerOffset;
+				return HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0]);
+			}
 			return null;
 		}
 		

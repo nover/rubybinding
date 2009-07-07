@@ -57,7 +57,13 @@ namespace MonoDevelop.RubyBinding
 		 * Variables/method calls/everything elsse
 #endif
 		static RubyCompletion () {
+			Console.WriteLine ("Initializing RubyCompletion");
+			string scriptname = "monodevelop_ruby_parser";
 			ruby_init ();
+			ruby_script (scriptname);
+			ruby_set_argv (1, new string[]{scriptname});
+			ruby_init_loadpath ();
+			Console.WriteLine ("Done initializing RubyCompletion");
 		}
 
 		static Dictionary<string,string> icons = new Dictionary<string,string> {
@@ -77,15 +83,17 @@ namespace MonoDevelop.RubyBinding
 			lines.Insert (line, string.Format ("$md_completions = {0}.methods.collect{{|m| [m,{1}]}} + {0}.class.constants.collect{{|c| [c,{2}]}}", symbol, "'method'", "'constant'"));
 			Console.WriteLine ("Replacing {0} with {1}", lines[line+1], lines[line]);
 			lines.RemoveAt (line+1);
+			lines.Insert (0, "$md_completions = []");
 			
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
-			sb.AppendFormat ("$md_completions");
+			sb.AppendLine ("$md_completions");
 		
 			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
+				rb_eval_string_wrap ("puts($!)", ref runstatus);
 				return new ICompletionData[0];
 			}
 			
@@ -144,7 +152,16 @@ namespace MonoDevelop.RubyBinding
 		public static extern void ruby_init ();
 		
 		[DllImport("ruby1.8")]
+		public static extern void ruby_init_loadpath ();
+		
+		[DllImport("ruby1.8")]
 		public static extern void ruby_init_stack ();
+		
+		[DllImport("ruby1.8")]
+		public static extern void ruby_set_argv (int argc, string[] argv);
+		
+		[DllImport("ruby1.8")]
+		public static extern void ruby_script (string scriptname);
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);

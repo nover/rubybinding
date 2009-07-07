@@ -80,7 +80,7 @@ namespace MonoDevelop.RubyBinding
 			return null;
 		}
 		
-		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '"', '\\', '\'', '`', '>', '<', '=', ';', '|', '&', '{', '(' };
+		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(' };
 		private static string GetSymbol (string contents, ICodeCompletionContext context)
 		{
 			if (string.IsNullOrEmpty (contents) || 0 == context.TriggerOffset) { 

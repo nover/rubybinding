@@ -64,9 +64,26 @@ namespace MonoDevelop.RubyBinding
 			ruby_script (scriptname);
 			ruby_set_argv (1, new string[]{scriptname});
 			ruby_init_loadpath ();
-			
 			Console.WriteLine ("Done initializing RubyCompletion");
 		}
+		
+		static Dictionary<Regex,CompleteFunction> symbolTypes = new Dictionary<Regex,CompleteFunction> {
+			{ new Regex ("^'[^']*'$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "\"\"", line); } },
+//			{ new Regex ("^\"(\\\\\"|[^\"])*\"$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "String", line); } },
+//			{ new Regex (@"^([\d\.]+|0x[a-fA-F\d]+)$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Numeric", line); } },
+//			{ new Regex (@"^\[.*\]$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Array", line); } },
+//			{ new Regex (@"^{.*}$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Hash", line); } },
+//			{ new Regex (@"^/(\\/|[^/])*/$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Regexp", line); } },
+//			{ new Regex (@"^:\w[\w\d]*$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Symbol", line); } },
+		};
+		
+		static string[] reservedWords = new string[] {
+			"alias", "and", "BEGIN", "begin", "break", "case", "class", "def", "defined?", "do", "else", "elsif", "END", "end", "ensure", "false", "for", "if", "in", "module", "next", "nil", "not", "or", "redo", "rescue", "retry", "return", "self", "super", "then", "true", "undef", "unless", "until", "when", "while", "yield"
+		};
+		
+		static string[] operators = new string[] {
+			"::", ".", "[]", "**", "!", "~", "*",  "/",  "%", "+",  "-", "<<",  ">>", "&", "|",  "^", ">",  ">=",  "<",  "<=", "<=>", "==", "===", "!=", "=~", "!~", "&&", "||", "..", "...", "=", "**=", "!=", "~=", "*=",  "/=",  "%=", "+=",  "-=", "<<=",  ">>=", "&=", "|=",  "^=", "&&=", "||="
+		};
 
 		static string[,] completors = new string[,] {
 			{".methods", Stock.Method},
@@ -77,6 +94,18 @@ namespace MonoDevelop.RubyBinding
 		
 		// Don't complete operators
 		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
+		
+		public static ICompletionData[] Complete (string contents, string symbol, int line)
+		{
+			if (0 > Array.IndexOf (reservedWords, symbol) && 0 > Array.IndexOf (operators, symbol)) {
+				foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
+					if (pair.Key.IsMatch (symbol)){ return pair.Value (contents, symbol, line); }
+				}
+				return CompleteSymbol (contents, symbol, line);
+			}
+			
+			return new ICompletionData[0];
+		}
 		
 		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line)
 		{
@@ -147,6 +176,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
+		public delegate ICompletionData[] CompleteFunction (string contents, string symbol, int line);
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);

@@ -55,7 +55,7 @@ namespace MonoDevelop.RubyBinding
 				       symbol = GetSymbol (contents, completionContext);
 				Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
-					ICompletionData[] completions = RubyCompletion.CompleteSymbol (contents, symbol, completionContext.TriggerLine-1);
+					ICompletionData[] completions = RubyCompletion.Complete (contents, symbol, completionContext.TriggerLine-1);
 					if (null != completions) {
 						Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 						cdl.AddRange (completions);

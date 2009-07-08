@@ -66,12 +66,13 @@ namespace MonoDevelop.RubyBinding
 			Console.WriteLine ("Done initializing RubyCompletion");
 		}
 
-		static Dictionary<string,string> icons = new Dictionary<string,string> {
-			{ "method", Stock.Method },
-			{ "constant", Stock.Literal }
+		static string[,] completors = new string[,] {
+			{"$md_completion_methods", ".methods", Stock.Method},
+			{"$md_completion_constants", ".class.constants", Stock.Literal },
+			{"$md_completion_class_vars", ".class.class_variables", Stock.Field }
 		};
 		
-		public static ICompletionData[] Complete (string contents, string symbol, int line)
+		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line)
 		{
 			ICompletionData[] rv = null;
 			
@@ -80,16 +81,22 @@ namespace MonoDevelop.RubyBinding
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
 			completions = new List<ICompletionData> ();
-			lines.Insert (line, string.Format ("$md_completions = {0}.methods.collect{{|m| [m,{1}]}} + {0}.class.constants.collect{{|c| [c,{2}]}}", symbol, "'method'", "'constant'"));
-			Console.WriteLine ("Replacing {0} with {1}", lines[line+1], lines[line]);
-			lines.RemoveAt (line+1);
-			lines.Insert (0, "$md_completions = []");
+			for (int i=0; i<completors.GetLength(0); ++i) {
+				lines.Insert (line+i*2, string.Format ("{0} = {1}{2}", completors[i,0], symbol, completors[i,1]));
+				lines.Insert (0, string.Format ("{0} = []", completors[i,0]));
+			}
+			lines.RemoveAt (line+completors.GetLength(0)*2);
 			
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
-			sb.AppendLine ("$md_completions");
+			sb.Append ("[$!");
+			for (int i=0; i<completors.GetLength(0); ++i) {
+				sb.AppendFormat (", {0}", completors[i,0]);
+			}
+			sb.AppendLine ("]");
 		
+			Console.WriteLine (sb.ToString ());
 			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
@@ -97,20 +104,38 @@ namespace MonoDevelop.RubyBinding
 				return new ICompletionData[0];
 			}
 			
-			rb_iterate (IterateCompletions, raw_completions, AddCompletion, IntPtr.Zero);
+			for (int i=0; i<completors.GetLength(0); ++i) {
+				rb_iterate (IterateCompletions, rb_ary_entry (raw_completions, i+1), delegate(IntPtr completion, IntPtr z){
+					AddCompletion (completion, completors[i,2]);
+					return IntPtr.Zero;
+				}, IntPtr.Zero);
+			}
 			rv = completions.ToArray ();
 			Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
 			
 			return rv;
-		}// Complete
+		}// CompleteSymbol
 		
 		public static List<ICompletionData> completions;
 		
-		public static IntPtr AddCompletion (IntPtr completion, IntPtr extra)
+		public static void AddCompletion (IntPtr completion, string icon)
 		{
-			string name = FromRubyString (rb_ary_entry (completion, 0));
-			string itemtype = FromRubyString (rb_ary_entry (completion, 1));
-			completions.Add (new CompletionData (name, icons[itemtype], name, name));
+			string name = FromRubyString (completion);
+			Console.WriteLine ("Adding {0} {1}", icon, name);
+			completions.Add (new CompletionData (name, icon, name, name));
+		}// AddCompletion
+		
+		public static IntPtr AddConstant (IntPtr completion, IntPtr extra)
+		{
+			string name = FromRubyString (completion);
+			completions.Add (new CompletionData (name, Stock.Literal, name, name));
+			return IntPtr.Zero;
+		}// AddCompletion
+		
+		public static IntPtr AddField (IntPtr completion, IntPtr extra)
+		{
+			string name = FromRubyString (completion);
+			completions.Add (new CompletionData (name, Stock.Field, name, name));
 			return IntPtr.Zero;
 		}// AddCompletion
 		

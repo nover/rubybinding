@@ -30,6 +30,7 @@
 
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -63,14 +64,19 @@ namespace MonoDevelop.RubyBinding
 			ruby_script (scriptname);
 			ruby_set_argv (1, new string[]{scriptname});
 			ruby_init_loadpath ();
+			
 			Console.WriteLine ("Done initializing RubyCompletion");
 		}
 
 		static string[,] completors = new string[,] {
-			{"$md_completion_methods", ".methods", Stock.Method},
-			{"$md_completion_constants", ".class.constants", Stock.Literal },
-			{"$md_completion_class_vars", ".class.class_variables", Stock.Field }
+			{".methods", Stock.Method},
+			{".class.instance_variables", Stock.Field },
+			{".class.constants", Stock.Literal },
+			{".class.class_variables", Stock.Field }
 		};
+		
+		// Don't complete operators
+		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
 		
 		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line)
 		{
@@ -81,22 +87,24 @@ namespace MonoDevelop.RubyBinding
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
 			completions = new List<ICompletionData> ();
-			for (int i=0; i<completors.GetLength(0); ++i) {
-				lines.Insert (line+i*2, string.Format ("{0} = {1}{2}", completors[i,0], symbol, completors[i,1]));
-				lines.Insert (0, string.Format ("{0} = []", completors[i,0]));
-			}
-			lines.RemoveAt (line+completors.GetLength(0)*2);
+			
+			lines[line] = symbol;
+			lines.Insert (0, "set_trace_func(proc{|event,file,line,id,binding,klass| if('line'==event && __FILE__==file) then $monodevelop_bindings[line-$baseline]=binding; end})");
+			lines.Insert (0, "$monodevelop_bindings = {}");
+			lines.Insert (0, "$baseline = __LINE__-1");
 			
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
-			sb.Append ("[$!");
+			sb.AppendLine ("$monodevelop_bindings.each_key{|k| puts(k)}");
+			
+			sb.Append ("eval('[$!");
 			for (int i=0; i<completors.GetLength(0); ++i) {
-				sb.AppendFormat (", {0}", completors[i,0]);
+				sb.AppendFormat (", {0}{1}", symbol, completors[i,0]);
 			}
-			sb.AppendLine ("]");
+			sb.AppendLine (string.Format("]', $monodevelop_bindings[{0}])", line+3));
 		
-			Console.WriteLine (sb.ToString ());
+//			Console.WriteLine (sb.ToString ());
 			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
@@ -106,7 +114,7 @@ namespace MonoDevelop.RubyBinding
 			
 			for (int i=0; i<completors.GetLength(0); ++i) {
 				rb_iterate (IterateCompletions, rb_ary_entry (raw_completions, i+1), delegate(IntPtr completion, IntPtr z){
-					AddCompletion (completion, completors[i,2]);
+					AddCompletion (completion, completors[i,1]);
 					return IntPtr.Zero;
 				}, IntPtr.Zero);
 			}
@@ -121,22 +129,10 @@ namespace MonoDevelop.RubyBinding
 		public static void AddCompletion (IntPtr completion, string icon)
 		{
 			string name = FromRubyString (completion);
-			Console.WriteLine ("Adding {0} {1}", icon, name);
-			completions.Add (new CompletionData (name, icon, name, name));
-		}// AddCompletion
-		
-		public static IntPtr AddConstant (IntPtr completion, IntPtr extra)
-		{
-			string name = FromRubyString (completion);
-			completions.Add (new CompletionData (name, Stock.Literal, name, name));
-			return IntPtr.Zero;
-		}// AddCompletion
-		
-		public static IntPtr AddField (IntPtr completion, IntPtr extra)
-		{
-			string name = FromRubyString (completion);
-			completions.Add (new CompletionData (name, Stock.Field, name, name));
-			return IntPtr.Zero;
+			// Console.WriteLine ("Adding {0} {1}", icon, name);
+			if (completionResult.IsMatch (name)) {
+				completions.Add (new CompletionData (name, icon, name, name));
+			}
 		}// AddCompletion
 		
 		public static IntPtr IterateCompletions (IntPtr collection)
@@ -187,6 +183,9 @@ namespace MonoDevelop.RubyBinding
 		
 		[DllImport("ruby1.8")]
 		public static extern void ruby_script (string scriptname);
+		
+		[DllImport("ruby1.8")]
+		public static extern void ruby_finalize ();
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);

@@ -68,7 +68,7 @@ namespace MonoDevelop.RubyBinding
 		}
 		
 		static Dictionary<Regex,CompleteFunction> symbolTypes = new Dictionary<Regex,CompleteFunction> {
-			{ new Regex ("^'[^']*'$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "\"\"", line); } },
+			{ new Regex ("^'[^']*'$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "\"\"", line, instance_completors); } },
 //			{ new Regex ("^\"(\\\\\"|[^\"])*\"$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "String", line); } },
 //			{ new Regex (@"^([\d\.]+|0x[a-fA-F\d]+)$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Numeric", line); } },
 //			{ new Regex (@"^\[.*\]$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Array", line); } },
@@ -82,14 +82,20 @@ namespace MonoDevelop.RubyBinding
 		};
 		
 		static string[] operators = new string[] {
-			"::", ".", "[]", "**", "!", "~", "*",  "/",  "%", "+",  "-", "<<",  ">>", "&", "|",  "^", ">",  ">=",  "<",  "<=", "<=>", "==", "===", "!=", "=~", "!~", "&&", "||", "..", "...", "=", "**=", "!=", "~=", "*=",  "/=",  "%=", "+=",  "-=", "<<=",  ">>=", "&=", "|=",  "^=", "&&=", "||="
+			"::", ".", "[", "**", "!", "~", "*",  "/",  "%", "+",  "-", "<<",  ">>", "&", "|",  "^", ">",  ">=",  "<",  "<=", "<=>", "==", "===", "!=", "=~", "!~", "&&", "||", "..", "...", "=", "**=", "!=", "~=", "*=",  "/=",  "%=", "+=",  "-=", "<<=",  ">>=", "&=", "|=",  "^=", "&&=", "||="
 		};
 
-		static string[,] completors = new string[,] {
-			{".methods", Stock.Method},
+		static string[,] instance_completors = new string[,] {
+			{".class.instance_methods", Stock.Method},
 			{".class.instance_variables", Stock.Field },
-			{".class.constants", Stock.Literal },
-			{".class.class_variables", Stock.Field }
+//			{".class.constants", Stock.Literal },
+//			{".class.class_variables", Stock.Field }
+		};
+		
+		static string[,] class_completors = new string[,] {
+			{".methods", Stock.Method },
+			{".constants", Stock.Literal },
+			{".class_variables", Stock.Field }
 		};
 		
 		// Don't complete operators
@@ -101,13 +107,13 @@ namespace MonoDevelop.RubyBinding
 				foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
 					if (pair.Key.IsMatch (symbol)){ return pair.Value (contents, symbol, line); }
 				}
-				return CompleteSymbol (contents, symbol, line);
+				return CompleteSymbol (contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
 			}
 			
 			return new ICompletionData[0];
 		}
 		
-		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line)
+		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;
 			
@@ -125,15 +131,15 @@ namespace MonoDevelop.RubyBinding
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
-			sb.AppendLine ("$monodevelop_bindings.each_key{|k| puts(k)}");
+			// sb.AppendLine ("$monodevelop_bindings.each_key{|k| puts(k)}");
 			
 			sb.Append ("eval('[$!");
 			for (int i=0; i<completors.GetLength(0); ++i) {
 				sb.AppendFormat (", {0}{1}", symbol, completors[i,0]);
 			}
-			sb.AppendLine (string.Format("]', $monodevelop_bindings[{0}])", line+3));
+			sb.AppendLine (string.Format("]', $monodevelop_bindings[{0}])", line+2));
 		
-//			Console.WriteLine (sb.ToString ());
+			// Console.WriteLine (sb.ToString ());
 			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
@@ -148,7 +154,7 @@ namespace MonoDevelop.RubyBinding
 				}, IntPtr.Zero);
 			}
 			rv = completions.ToArray ();
-			Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
+			// Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
 			
 			return rv;
 		}// CompleteSymbol

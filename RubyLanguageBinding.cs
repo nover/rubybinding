@@ -47,11 +47,11 @@ namespace MonoDevelop.RubyBinding
 		#region ILanguageBinding implementation
 		
 		public string BlockCommentEndTag {
-			get { return string.Empty; }
+			get { return "=end"; }
 		}
 		
 		public string BlockCommentStartTag {
-			get { return string.Empty; }
+			get { return "=begin"; }
 		}
 		
 		public string Language {

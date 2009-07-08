@@ -67,6 +67,7 @@
     <Compile Include="gtk-gui\MonoDevelop.RubyBinding.GeneralOptionsPanel.cs" />
     <Compile Include="Gui\RubyCompletion.cs" />
     <Compile Include="Gui\RubyTextEditorExtension.cs" />
+    <Compile Include="Gui\RubyDocumentParser.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -88,4 +89,9 @@
     <Folder Include="Project\" />
     <Folder Include="Gui\" />
   </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties InternalTargetFrameworkVersion="3.5" />
+    </MonoDevelop>
+  </ProjectExtensions>
 </Project>

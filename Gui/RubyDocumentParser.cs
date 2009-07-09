@@ -55,6 +55,47 @@ namespace MonoDevelop.RubyBinding
 			return RubyLanguageBinding.IsRubyFile (fileName);
 		}
 		
+		public override ParsedDocument Parse (MonoDevelop.Projects.Dom.Parser.ProjectDom dom, string fileName, string content)
+		{
+			List<Error> errors = RubyCompletion.CheckForErrors (content);
+			
+			if (null != errors && 0 < errors.Count) {
+				ParsedDocument doc = successfulParses.ContainsKey (fileName)? 
+				    successfulParses[fileName]: 
+				    new ParsedDocument (fileName);
+				foreach (Error err in errors) {
+					Console.WriteLine ("RubyDocumentParser: Error {0}:{1} {2}", fileName, err.Region.Start.Line, err.Message);
+					doc.Add (err); 
+				}
+				return doc;
+			}
+				
+			lock (this) {
+				string[] lines = content.Split (new string[]{Environment.NewLine}, StringSplitOptions.None);
+				
+				methods = new Dictionary<int, string> ();
+				classes = new Dictionary<int, string> ();
+				
+				if (!RunStack (lines)) {
+					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: null;
+				}
+				
+				ParsedDocument doc = new ParsedDocument (fileName);
+				if(null == doc.CompilationUnit){ doc.CompilationUnit = new CompilationUnit (fileName); }
+				CompilationUnit cu = (CompilationUnit)doc.CompilationUnit;
+				
+				PopulateClasses (cu);
+				
+				if (0 < methods.Count) {
+					DomType glob = new DomType (cu, ClassType.Unknown, GettextCatalog.GetString ("(Global Methods)"), new DomLocation (1, 1), string.Empty, new DomRegion (1, lines.Length), new List<IMember> ());
+					PopulateMethods (glob);
+					cu.Add (glob);
+				}// Add global methods
+				
+				return successfulParses[fileName] = doc;
+			}
+		}
+		
 		/// <summary>
 		/// Populate methods and classes dictionaries from content lines
 		/// </summary>
@@ -120,34 +161,6 @@ namespace MonoDevelop.RubyBinding
 			}// stack imbalance
 			
 			return (0 == stack.Count);
-		}
-		
-		public override ParsedDocument Parse (MonoDevelop.Projects.Dom.Parser.ProjectDom dom, string fileName, string content)
-		{
-			lock (this) {
-				string[] lines = content.Split (new string[]{Environment.NewLine}, StringSplitOptions.None);
-				
-				methods = new Dictionary<int, string> ();
-				classes = new Dictionary<int, string> ();
-				
-				if (!RunStack (lines)) {
-					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: null;
-				}
-				
-				ParsedDocument doc = new ParsedDocument (fileName);
-				if(null == doc.CompilationUnit){ doc.CompilationUnit = new CompilationUnit (fileName); }
-				CompilationUnit cu = (CompilationUnit)doc.CompilationUnit;
-				
-				PopulateClasses (cu);
-				
-				if (0 < methods.Count) {
-					DomType glob = new DomType (cu, ClassType.Unknown, GettextCatalog.GetString ("(Global Methods)"), new DomLocation (1, 1), string.Empty, new DomRegion (1, lines.Length), new List<IMember> ());
-					PopulateMethods (glob);
-					cu.Add (glob);
-				}// Add global methods
-				
-				return successfulParses[fileName] = doc;
-			}
 		}
 		
 		/// <summary>

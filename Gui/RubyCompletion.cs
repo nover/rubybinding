@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using MonoDevelop.Core.Gui;
+using MonoDevelop.Projects.Dom;
 using MonoDevelop.Projects.Gui.Completion;
 
 namespace MonoDevelop.RubyBinding
@@ -58,6 +59,9 @@ namespace MonoDevelop.RubyBinding
 			ruby_script (scriptname);
 			ruby_set_argv (1, new string[]{scriptname});
 			ruby_init_loadpath ();
+			
+			int runstatus = 0;
+			rb_eval_string_wrap ("$baseline=0", ref runstatus);
 			Console.WriteLine ("Done initializing RubyCompletion");
 		}
 		
@@ -94,6 +98,7 @@ namespace MonoDevelop.RubyBinding
 		
 		// Don't complete operators
 		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
+		static Regex errorMessage = new Regex (@"^[^:]*:(?<line>\d+):\s*(?<message>.*)", RegexOptions.Compiled);
 		
 		public static ICompletionData[] Complete (string contents, string symbol, int line)
 		{
@@ -107,7 +112,27 @@ namespace MonoDevelop.RubyBinding
 			return new ICompletionData[0];
 		}
 		
-		public static ICompletionData[] CompleteSymbol (string contents, string symbol, int line, string[,] completors)
+		public static List<Error> CheckForErrors (string contents)
+		{
+			int runstatus = 0;
+			int baseline = int.Parse (FromRubyString (rb_eval_string_wrap ("(__LINE__-1).to_s", ref runstatus)));
+			rb_eval_string_wrap (contents, ref runstatus);
+			Match match;
+			List<Error> errors = new List<Error> ();
+			
+			if (0 != runstatus) {
+				string[] messages = FromRubyString (rb_eval_string_wrap ("$!.message", ref runstatus)).Split(new char[]{'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string error in messages) {
+					Console.WriteLine ("RubyCompletion: Error {0}", error);
+					if (null != (match = errorMessage.Match (error)) && match.Success) {
+						errors.Add (new Error (int.Parse (match.Groups["line"].Value)-baseline, 1, match.Groups["message"].Value));
+					}
+				}
+			}
+			return errors;
+		}
+		
+		static ICompletionData[] CompleteSymbol (string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;
 			
@@ -155,7 +180,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public static List<ICompletionData> completions;
 		
-		public static void AddCompletion (IntPtr completion, string icon)
+		static void AddCompletion (IntPtr completion, string icon)
 		{
 			string name = FromRubyString (completion);
 			// Console.WriteLine ("Adding {0} {1}", icon, name);

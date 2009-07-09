@@ -2,7 +2,7 @@
        namespace   = "MonoDevelop"
        name		   = "Ruby Language Binding"
        author      = "Levi Bard"
-       copyright   = "MIT/X11"
+       copyright   = "GPLv2"
        url         = "http://www.monodevelop.com"
        description = "Ruby Language binding"
        category    = "Language bindings"
@@ -166,9 +166,9 @@
 	<Extension path = "/MonoDevelop/Autotools/MakefileHandlers">
 		<Class class = "MonoDevelop.RubyBinding.MakefileHandler"/>
 	</Extension>
+	-->
 	
 	<Extension path = "/MonoDevelop/ProjectModel/DomParser">
-		<Class class = "MonoDevelop.RubyBinding.Parser.RubyDocumentParser" id = "RubyDocumentParser" />
+		<Class class = "MonoDevelop.RubyBinding.RubyDocumentParser" id = "RubyDocumentParser" />
 	</Extension>
-	-->
 </Addin>

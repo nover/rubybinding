@@ -53,6 +53,7 @@ namespace MonoDevelop.RubyBinding
 		 * Variables/method calls/everything elsse
 #endif
 		static RubyCompletion () {
+			// TODO: Does this always happen on the main thread?
 			Console.WriteLine ("Initializing RubyCompletion");
 			string scriptname = "monodevelop_ruby_parser";
 			ruby_init ();
@@ -102,34 +103,39 @@ namespace MonoDevelop.RubyBinding
 		
 		public static ICompletionData[] Complete (string contents, string symbol, int line)
 		{
-			if (0 > Array.IndexOf (reservedWords, symbol) && 0 > Array.IndexOf (operators, symbol)) {
-				foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
-					if (pair.Key.IsMatch (symbol)){ return pair.Value (contents, symbol, line); }
+			return GuiThreadSync<ICompletionData[]> (delegate() {
+				if (0 > Array.IndexOf (reservedWords, symbol) && 0 > Array.IndexOf (operators, symbol)) {
+					foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
+						if (pair.Key.IsMatch (symbol)){ return pair.Value (contents, symbol, line); }
+					}
+					return CompleteSymbol (contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
 				}
-				return CompleteSymbol (contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
-			}
-			
-			return new ICompletionData[0];
+				
+				return new ICompletionData[0];
+			});
 		}
 		
 		public static List<Error> CheckForErrors (string contents)
 		{
-			int runstatus = 0;
-			int baseline = int.Parse (FromRubyString (rb_eval_string_wrap ("(__LINE__-1).to_s", ref runstatus)));
-			rb_eval_string_wrap (contents, ref runstatus);
-			Match match;
-			List<Error> errors = new List<Error> ();
-			
-			if (0 != runstatus) {
-				string[] messages = FromRubyString (rb_eval_string_wrap ("$!.message", ref runstatus)).Split(new char[]{'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
-				foreach (string error in messages) {
-					Console.WriteLine ("RubyCompletion: Error {0}", error);
-					if (null != (match = errorMessage.Match (error)) && match.Success) {
-						errors.Add (new Error (int.Parse (match.Groups["line"].Value)-baseline, 1, match.Groups["message"].Value));
+			return GuiThreadSync<List<Error>> (delegate() {
+				int runstatus = 0;
+				int baseline = int.Parse (FromRubyString (rb_eval_string_wrap ("(__LINE__-1).to_s", ref runstatus)));
+				rb_eval_string_wrap (contents, ref runstatus);
+				Match match;
+				List<Error> errors = new List<Error> ();
+				
+				if (0 != runstatus) {
+					string[] messages = FromRubyString (rb_eval_string_wrap ("$!.message", ref runstatus)).Split(new char[]{'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
+					foreach (string error in messages) {
+						// Console.WriteLine ("RubyCompletion: Error {0}", error);
+						if (null != (match = errorMessage.Match (error)) && match.Success) {
+							errors.Add (new Error (int.Parse (match.Groups["line"].Value)-baseline, 1, match.Groups["message"].Value));
+						}
 					}
 				}
-			}
-			return errors;
+				
+				return errors;
+			});
 		}
 		
 		static ICompletionData[] CompleteSymbol (string contents, string symbol, int line, string[,] completors)
@@ -198,6 +204,35 @@ namespace MonoDevelop.RubyBinding
 		{
 			return Marshal.PtrToStringAuto (rb_string_value_cstr (ref rubyval));
 		}
+		
+		/// <summary>
+		/// Performs an operation on the gui thread, 
+		/// blocking until completion.
+		/// </summary>
+		/// <param name="realfunction">
+		/// A <see cref="Func<T>"/>: The real function to execute
+		/// </param>
+		/// <returns>
+		/// A <see cref="T"/>: The result of realfunction, or default(T)
+		/// </returns>
+		static T GuiThreadSync<T> (Func<T> realfunction)
+		{
+			if (DispatchService.IsGuiThread){ return realfunction (); }
+			
+			T result = default (T);
+			ManualResetEvent mre = new ManualResetEvent (false);
+			
+			Gtk.Application.Invoke (delegate (object o, EventArgs e) {
+				try {
+					result = realfunction ();
+				} finally {
+					mre.Set ();
+				}
+			});
+			
+			mre.WaitOne ();
+			return result;
+		}// GuiThreadSync
 		
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);

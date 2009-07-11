@@ -40,7 +40,7 @@ namespace MonoDevelop.RubyBinding
 		};
 		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>\w[\w\d]*)", RegexOptions.Compiled);
 		static Regex classDefinition = new Regex (@"^\s*class\s+([A-Z][\w\d]*::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
-		// static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
+		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
 		
 		Dictionary<string,ParsedDocument> successfulParses;
 		Dictionary<int,string> methods;
@@ -145,6 +145,9 @@ namespace MonoDevelop.RubyBinding
 						break;
 					}
 				}// check for unimportant scope increase
+				if (null != (match = doEndBlock.Match (line)) && match.Success && !match.Groups["end"].Success) {
+					stack.Push (new KeyValuePair<int,string> (i, string.Empty));
+				}// check for do/end-scoped block with inline do
 				
 				if (null != (match = methodDefinition.Match (line)) && match.Success) {
 					stack.Push (new KeyValuePair<int,string> (i, match.Groups["name"].Value));

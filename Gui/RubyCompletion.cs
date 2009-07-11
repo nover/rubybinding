@@ -54,16 +54,15 @@ namespace MonoDevelop.RubyBinding
 #endif
 		static RubyCompletion () {
 			// TODO: Does this always happen on the main thread?
-			Console.WriteLine ("Initializing RubyCompletion");
-			string scriptname = "monodevelop_ruby_parser";
-			ruby_init ();
-			ruby_script (scriptname);
-			ruby_set_argv (1, new string[]{scriptname});
-			ruby_init_loadpath ();
-			
-			int runstatus = 0;
-			rb_eval_string_wrap ("$baseline=0", ref runstatus);
-			Console.WriteLine ("Done initializing RubyCompletion");
+			DispatchService.GuiDispatch (delegate () {
+				Console.WriteLine ("Initializing RubyCompletion");
+				string scriptname = "monodevelop_ruby_parser";
+				ruby_init ();
+				ruby_script (scriptname);
+				ruby_set_argv (1, new string[]{scriptname});
+				ruby_init_loadpath ();
+				Console.WriteLine ("Done initializing RubyCompletion");
+			});
 		}
 		
 		static Dictionary<Regex,CompleteFunction> symbolTypes = new Dictionary<Regex,CompleteFunction> {
@@ -217,20 +216,12 @@ namespace MonoDevelop.RubyBinding
 		/// </returns>
 		static T GuiThreadSync<T> (Func<T> realfunction)
 		{
-			if (DispatchService.IsGuiThread){ return realfunction (); }
-			
 			T result = default (T);
-			ManualResetEvent mre = new ManualResetEvent (false);
 			
-			Gtk.Application.Invoke (delegate (object o, EventArgs e) {
-				try {
-					result = realfunction ();
-				} finally {
-					mre.Set ();
-				}
+			DispatchService.GuiSyncDispatch (delegate () {
+				result = realfunction ();
 			});
 			
-			mre.WaitOne ();
 			return result;
 		}// GuiThreadSync
 		

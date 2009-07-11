@@ -40,6 +40,7 @@ namespace MonoDevelop.RubyBinding
 		};
 		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>\w[\w\d]*)", RegexOptions.Compiled);
 		static Regex classDefinition = new Regex (@"^\s*class\s+([A-Z][\w\d]*::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
+		// static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
 		
 		Dictionary<string,ParsedDocument> successfulParses;
 		Dictionary<int,string> methods;
@@ -77,7 +78,7 @@ namespace MonoDevelop.RubyBinding
 				classes = new Dictionary<int, string> ();
 				
 				if (!RunStack (lines)) {
-					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: null;
+					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: new ParsedDocument (fileName);
 				}
 				
 				ParsedDocument doc = new ParsedDocument (fileName);

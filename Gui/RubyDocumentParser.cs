@@ -43,8 +43,8 @@ namespace MonoDevelop.RubyBinding
 		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
 		
 		Dictionary<string,ParsedDocument> successfulParses;
-		Dictionary<int,string> methods;
-		Dictionary<int,string> classes;
+		Dictionary<int,RubyDeclaration> methods;
+		Dictionary<int,RubyDeclaration> classes;
 		
 		public RubyDocumentParser (): base (RubyLanguageBinding.RubyLanguage, "text/x-ruby")
 		{
@@ -74,8 +74,8 @@ namespace MonoDevelop.RubyBinding
 			lock (this) {
 				string[] lines = content.Split (new string[]{Environment.NewLine}, StringSplitOptions.None);
 				
-				methods = new Dictionary<int, string> ();
-				classes = new Dictionary<int, string> ();
+				methods = new Dictionary<int, RubyDeclaration> ();
+				classes = new Dictionary<int, RubyDeclaration> ();
 				
 				if (!RunStack (lines)) {
 					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: new ParsedDocument (fileName);
@@ -113,7 +113,7 @@ namespace MonoDevelop.RubyBinding
 		/// </returns>
 		bool RunStack (string[] contentLines)
 		{
-			Stack<KeyValuePair<int,string>> stack = new Stack<KeyValuePair<int,string>> ();
+			Stack<KeyValuePair<int,RubyDeclaration>> stack = new Stack<KeyValuePair<int,RubyDeclaration>> ();
 			int i = 1;
 			Match match;
 			
@@ -126,14 +126,14 @@ namespace MonoDevelop.RubyBinding
 						return false; 
 					}// stack imbalance
 					
-					KeyValuePair<int,string> poppedPair = stack.Pop ();
-					if (!string.IsNullOrEmpty (poppedPair.Value)) {
+					KeyValuePair<int,RubyDeclaration> poppedPair = stack.Pop ();
+					if (!string.IsNullOrEmpty (poppedPair.Value.name)) {
 						// Console.WriteLine ("Got {0} {1} from {2} to {3}", methods.ContainsKey(poppedPair.Key)? "method": "class", poppedPair.Value, poppedPair.Key, i);
 						if (methods.ContainsKey (poppedPair.Key)) {
-							methods[poppedPair.Key] = string.Format("{0}|{1}|{2}", poppedPair.Value, poppedPair.Key, i);
+							methods[poppedPair.Key].end = i;
 						}// end of method definition
 						if (classes.ContainsKey (poppedPair.Key)) {
-							classes[poppedPair.Key] = string.Format("{0}|{1}|{2}", poppedPair.Value, poppedPair.Key, i);
+							classes[poppedPair.Key].end = i;
 						}// end of class definition
 					}// only care about method and class definitions
 				}// Scope decrease
@@ -141,21 +141,21 @@ namespace MonoDevelop.RubyBinding
 				foreach (string sb in scopeBeginners) {
 					if (line.StartsWith (sb, StringComparison.Ordinal) && !line.EndsWith ("end", StringComparison.Ordinal) &&
 					    (line.Length == sb.Length || char.IsWhiteSpace (line[sb.Length]) || char.IsPunctuation (line[sb.Length]))) {
-						stack.Push (new KeyValuePair<int,string> (i, string.Empty));
+						stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, i, string.Empty, line)));
 						break;
 					}
 				}// check for unimportant scope increase
 				if (null != (match = doEndBlock.Match (line)) && match.Success && !match.Groups["end"].Success) {
-					stack.Push (new KeyValuePair<int,string> (i, string.Empty));
+					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, i, string.Empty, line)));
 				}// check for do/end-scoped block with inline do
 				
 				if (null != (match = methodDefinition.Match (line)) && match.Success) {
-					stack.Push (new KeyValuePair<int,string> (i, match.Groups["name"].Value));
-					methods[i] = match.Groups["name"].Value;
+					RubyDeclaration method = methods[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, method));
 				}// begin method definition
 				if (null != (match = classDefinition.Match (line)) && match.Success) {
-					stack.Push (new KeyValuePair<int,string> (i, match.Groups["name"].Value));
-					classes[i] = match.Groups["name"].Value;
+					RubyDeclaration klass = classes[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, klass));
 				}// begin class definition
 				++i;
 			}// parse line
@@ -172,13 +172,9 @@ namespace MonoDevelop.RubyBinding
 		/// </summary>
 		void PopulateClasses (CompilationUnit cu)
 		{
-			foreach (KeyValuePair<int,string> pair in classes) {
-				string[] tokens = pair.Value.Split ('|');
-				string name = tokens[0];
-				int start = int.Parse (tokens[1]);
-				int end = int.Parse (tokens[2]);
-				DomType myclass = new DomType (cu, ClassType.Class, name, new DomLocation (start, 1), string.Empty, new DomRegion (start+1, end+1), new List<IMember> ());
-				
+			foreach (KeyValuePair<int,RubyDeclaration> pair in classes) {
+				DomType myclass = new DomType (cu, ClassType.Class, pair.Value.name, new DomLocation (pair.Value.begin, 1), string.Empty, 
+				                               new DomRegion (pair.Value.begin+1, pair.Value.end+1), new List<IMember> ());
 				PopulateMethods (myclass);
 				cu.Add (myclass);
 			}// Add classes and member methods
@@ -191,19 +187,33 @@ namespace MonoDevelop.RubyBinding
 		{
 			List<int> removal = new List<int> ();
 			
-			foreach (KeyValuePair<int,string> mpair in methods) {
+			foreach (KeyValuePair<int,RubyDeclaration> mpair in methods) {
 				if (mpair.Key > parent.Location.Line && mpair.Key < parent.BodyRegion.End.Line) {
-					string[] mtokens = mpair.Value.Split ('|');
-					string mname = mtokens[0];
-					int mstart = int.Parse (mtokens[1]);
-					int mend = int.Parse (mtokens[2]);
-					parent.Add (new DomMethod (mname, Modifiers.None, MethodModifier.None, new DomLocation (mstart, 1), new DomRegion (mstart+1, mend+1)));
+					parent.Add (new DomMethod (mpair.Value.name, Modifiers.None, MethodModifier.None, new DomLocation (mpair.Value.begin, 1), 
+					                           new DomRegion (mpair.Value.begin+1, mpair.Value.end+1)));
 					removal.Add (mpair.Key);
 				}// Add methods that are declared within the parent's scope
 			}// Check detected methods
 			
 			// Remove used methods from map
 			foreach (int key in removal){ methods.Remove (key); }
+		}
+		
+		/// <summary>
+		/// Helper class for declarations
+		/// </summary>
+		class RubyDeclaration {
+			public int begin;
+			public int end;
+			public string name;
+			public string declaration;
+			
+			public RubyDeclaration (int begin, int end, string name, string declaration) {
+				this.begin = begin;
+				this.end = end;
+				this.name = name;
+				this.declaration = declaration;
+			}
 		}
 	}
 }

@@ -23,6 +23,7 @@
 
 
 using System;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -66,7 +67,7 @@ namespace MonoDevelop.RubyBinding
 		}
 		
 		static Dictionary<Regex,CompleteFunction> symbolTypes = new Dictionary<Regex,CompleteFunction> {
-			{ new Regex ("^'[^']*'$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "\"\"", line, instance_completors); } },
+			{ new Regex ("^'[^']*'$", RegexOptions.Compiled), delegate(string basepath, string contents, string s, int line){ return CompleteSymbol(basepath, contents, "\"\"", line, instance_completors); } },
 //			{ new Regex ("^\"(\\\\\"|[^\"])*\"$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "String", line); } },
 //			{ new Regex (@"^([\d\.]+|0x[a-fA-F\d]+)$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Numeric", line); } },
 //			{ new Regex (@"^\[.*\]$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Array", line); } },
@@ -100,25 +101,32 @@ namespace MonoDevelop.RubyBinding
 		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
 		static Regex errorMessage = new Regex (@"^[^:]*:(?<line>\d+):\s*(?<message>.*)", RegexOptions.Compiled);
 		
-		public static ICompletionData[] Complete (string contents, string symbol, int line)
+		public static ICompletionData[] Complete (string basepath, string contents, string symbol, int line)
 		{
 			return GuiThreadSync<ICompletionData[]> (delegate() {
 				if (0 > Array.IndexOf (reservedWords, symbol) && 0 > Array.IndexOf (operators, symbol)) {
 					foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
-						if (pair.Key.IsMatch (symbol)){ return pair.Value (contents, symbol, line); }
+						if (pair.Key.IsMatch (symbol)){ return pair.Value (basepath, contents, symbol, line); }
 					}
-					return CompleteSymbol (contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
+					return CompleteSymbol (basepath, contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
 				}
 				
 				return new ICompletionData[0];
 			});
 		}
 		
-		public static List<Error> CheckForErrors (string contents)
+		public static List<Error> CheckForErrors (string basepath, string contents)
 		{
 			return GuiThreadSync<List<Error>> (delegate() {
 				int runstatus = 0;
-				int baseline = int.Parse (FromRubyString (rb_eval_string_wrap ("(__LINE__-1).to_s", ref runstatus)));
+				StringBuilder sb = new StringBuilder ();
+				sb.AppendFormat ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine);
+				sb.AppendLine ("(__LINE__-1).to_s");
+				int baseline = 0;
+				int.TryParse (FromRubyString (rb_eval_string_wrap (sb.ToString (), ref runstatus)), out baseline);
+				if (0 != runstatus) {
+					rb_eval_string_wrap ("puts($!)", ref runstatus);
+				}
 				rb_eval_string_wrap (contents, ref runstatus);
 				Match match;
 				List<Error> errors = new List<Error> ();
@@ -137,7 +145,7 @@ namespace MonoDevelop.RubyBinding
 			});
 		}
 		
-		static ICompletionData[] CompleteSymbol (string contents, string symbol, int line, string[,] completors)
+		static ICompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;
 			
@@ -151,12 +159,14 @@ namespace MonoDevelop.RubyBinding
 			lines.Insert (0, "set_trace_func(proc{|event,file,line,id,binding,klass| if('line'==event && __FILE__==file) then $monodevelop_bindings[line-$baseline]=binding; end})");
 			lines.Insert (0, "$monodevelop_bindings = {}");
 			lines.Insert (0, "$baseline = __LINE__-1");
+			lines.Insert (0, string.Format ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine));
 			
 			foreach (string linestr in lines) {
 				sb.AppendLine (linestr);
 			}
 			// sb.AppendLine ("$monodevelop_bindings.each_key{|k| puts(k)}");
 			
+			symbol = symbol.Replace ("'", "\\'");
 			sb.Append ("eval('[$!");
 			for (int i=0; i<completors.GetLength(0); ++i) {
 				sb.AppendFormat (", {0}{1}", symbol, completors[i,0]);
@@ -201,6 +211,7 @@ namespace MonoDevelop.RubyBinding
 		
 		static string FromRubyString (IntPtr rubyval)
 		{
+			if (IntPtr.Zero == rubyval || Qnil == rubyval){ return string.Empty; }
 			return Marshal.PtrToStringAuto (rb_string_value_cstr (ref rubyval));
 		}
 		
@@ -227,7 +238,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
-		public delegate ICompletionData[] CompleteFunction (string contents, string symbol, int line);
+		public delegate ICompletionData[] CompleteFunction (string basepath, string contents, string symbol, int line);
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
@@ -277,5 +288,6 @@ namespace MonoDevelop.RubyBinding
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_ary_entry (IntPtr array, int index);
 		
+		public static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
 	}// RubyCompletion
 }

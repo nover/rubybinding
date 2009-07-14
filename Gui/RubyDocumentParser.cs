@@ -21,6 +21,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -38,7 +39,7 @@ namespace MonoDevelop.RubyBinding
 		static string[] scopeBeginners = new string[] {
 			"begin", "case", "do", "for", "if",  "module", "while", "unless", "until"
 		};
-		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>\w[\w\d]*)", RegexOptions.Compiled);
+		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>[\w\*\+=></^&\|%~\?\!-][\w\d\*\+=></^&\|%~\?\!-]*)", RegexOptions.Compiled);
 		static Regex classDefinition = new Regex (@"^\s*class\s+([A-Z][\w\d]*::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
 		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
 		
@@ -58,7 +59,10 @@ namespace MonoDevelop.RubyBinding
 		
 		public override ParsedDocument Parse (MonoDevelop.Projects.Dom.Parser.ProjectDom dom, string fileName, string content)
 		{
-			List<Error> errors = RubyCompletion.CheckForErrors (content);
+			string basepath = (null == dom || null == dom.Project)?
+				Path.GetDirectoryName (fileName): 
+				(string)dom.Project.BaseDirectory.FullPath;
+			List<Error> errors = RubyCompletion.CheckForErrors (basepath, content);
 			
 			if (null != errors && 0 < errors.Count) {
 				ParsedDocument doc = successfulParses.ContainsKey (fileName)? 
@@ -120,7 +124,7 @@ namespace MonoDevelop.RubyBinding
 			foreach (string aline in contentLines) {
 				string line = aline.Trim ();
 				if (line.StartsWith ("end", StringComparison.Ordinal) && 
-				    (3 == line.Length ||  char.IsWhiteSpace (line[3]) || char.IsPunctuation (line[3]))) {
+				    (3 == line.Length || !char.IsLetterOrDigit (line[3]))) { 
 					if (0 == stack.Count){ 
 						Console.WriteLine ("RubyDocumentParser: Popping empty stack at {0}", i);
 						return false; 
@@ -145,15 +149,15 @@ namespace MonoDevelop.RubyBinding
 						break;
 					}
 				}// check for unimportant scope increase
+				
 				if (null != (match = doEndBlock.Match (line)) && match.Success && !match.Groups["end"].Success) {
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, i, string.Empty, line)));
 				}// check for do/end-scoped block with inline do
-				
-				if (null != (match = methodDefinition.Match (line)) && match.Success) {
+				else if (null != (match = methodDefinition.Match (line)) && match.Success) {
 					RubyDeclaration method = methods[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, method));
 				}// begin method definition
-				if (null != (match = classDefinition.Match (line)) && match.Success) {
+				else if (null != (match = classDefinition.Match (line)) && match.Success) {
 					RubyDeclaration klass = classes[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, klass));
 				}// begin class definition

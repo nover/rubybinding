@@ -41,22 +41,23 @@ namespace MonoDevelop.RubyBinding
 		
 		public override ICompletionDataList HandleCodeCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
-			Console.WriteLine ("RubyBinding: HandleCodeCompletion: '{0}'", completionChar);
-			
 			CompletionDataList cdl = new CompletionDataList ();
 			if ('.' == completionChar) {
 				string contents = Editor.Text,
 				       symbol = GetSymbol (contents, completionContext);
 				Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
-					ICompletionData[] completions = RubyCompletion.Complete (contents, symbol, completionContext.TriggerLine-1);
+					string basepath = (null == Document.Project)? 
+						Document.FileName.FullPath.ParentDirectory: 
+						Document.Project.BaseDirectory.FullPath;
+					ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
 					if (null != completions) {
 						Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 						cdl.AddRange (completions);
 					}
 				}
 			}
-			Console.WriteLine ("RubyBinding: Returning {0} completions", cdl.Count);
+			
 			return cdl;
 		}
 		

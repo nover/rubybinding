@@ -145,6 +145,11 @@ namespace MonoDevelop.RubyBinding
 			});
 		}
 		
+		public static string[] GetMethodArguments (string contents, int line, string owner, string method)
+		{
+			return null;
+		}
+		
 		static ICompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;

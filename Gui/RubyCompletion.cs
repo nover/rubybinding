@@ -76,7 +76,7 @@ namespace MonoDevelop.RubyBinding
 //			{ new Regex (@"^:\w[\w\d]*$", RegexOptions.Compiled), delegate(string contents, string s, int line){ return CompleteSymbol(contents, "Symbol", line); } },
 		};
 		
-		static string[] reservedWords = new string[] {
+		internal static readonly string[] reservedWords = new string[] {
 			"alias", "and", "BEGIN", "begin", "break", "case", "class", "def", "defined?", "do", "else", "elsif", "END", "end", "ensure", "false", "for", "if", "in", "module", "next", "nil", "not", "or", "redo", "rescue", "retry", "return", "self", "super", "then", "true", "undef", "unless", "until", "when", "while", "yield"
 		};
 		
@@ -145,47 +145,89 @@ namespace MonoDevelop.RubyBinding
 			});
 		}
 		
-		public static string[] GetMethodArguments (string contents, int line, string owner, string method)
+		public static string[] GetMethodArguments (string basepath, string contents, int line, string owner, string method)
 		{
-			return null;
+			Console.WriteLine ("GetMethodArguments({0},contents,{1},{2},{3})", basepath, line, owner, method);
+			int runstatus = 0;
+			List<string> lines = new List<string> (contents.Split ('\n'));
+			string joiner = string.IsNullOrEmpty (owner)? string.Empty: ".";
+			lines[line] = string.Empty;
+			
+			IntPtr arityval = EvaluateInContext (basepath, lines, string.Format ("{0}{1}method('{2}').arity.to_s", owner, joiner, method), line, ref runstatus);
+			
+			if (0 != runstatus) {
+				Console.WriteLine ("Evaluation failed: {0}", runstatus);
+				rb_eval_string_wrap ("puts($!)", ref runstatus);
+				return new string[0];
+			}
+			
+			int arity = int.Parse (FromRubyString (arityval));
+			// Console.WriteLine ("Got arity {0}", arity);
+			
+			return ParamsFromArity (arity);
+		}// GetMethodArguments
+		
+		
+		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(', '.' };
+		internal static string GetSymbol (string contents, int offset)
+		{
+			if (string.IsNullOrEmpty (contents) || 0 == offset) { 
+				Console.WriteLine ("RubyBinding: Empty contents or zero trigger offset {0}", offset);
+				return string.Empty; 
+			}
+			
+			int start = contents.LastIndexOfAny (wordBreakChars, offset-1)+1,
+			    end = contents.IndexOfAny (wordBreakChars, offset-1);
+			
+			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
+			
+			if (0 > start){ start = 0; }
+			if (0 > end){ end = contents.Length; }
+			if (end < start){ end = start; }
+			
+			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
+			
+			return contents.Substring (start, end-start);
 		}
+		
+		static string[] ParamsFromArity (int arity)
+		{
+			List<string> theparams = new List<string> ();
+			bool varargs = (0 > arity);
+			
+			if (varargs){ arity = -arity - 1; }
+			for (int i=0; i<arity; ++i) {
+				theparams.Add (string.Format ("arg{0}", i));
+			}
+			if (varargs){ theparams.Add ("*args"); }
+			
+			return theparams.ToArray ();
+		}// ParamsFromArity
 		
 		static ICompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;
-			
 			int runstatus = 0;
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
-			completions = new List<ICompletionData> ();
-			
 			lines[line] = symbol;
-			lines.Insert (0, "set_trace_func(proc{|event,file,line,id,binding,klass| if('line'==event && __FILE__==file) then $monodevelop_bindings[line-$baseline]=binding; end})");
-			lines.Insert (0, "$monodevelop_bindings = {}");
-			lines.Insert (0, "$baseline = __LINE__-1");
-			lines.Insert (0, string.Format ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine));
-			
-			foreach (string linestr in lines) {
-				sb.AppendLine (linestr);
-			}
-			// sb.AppendLine ("$monodevelop_bindings.each_key{|k| puts(k)}");
 			
 			symbol = symbol.Replace ("'", "\\'");
 			sb.Append ("eval('[$!");
-			for (int i=0; i<completors.GetLength(0); ++i) {
-				sb.AppendFormat (", {0}{1}", symbol, completors[i,0]);
+			for (int i=0; i < completors.GetLength (0); ++i) {
+				sb.AppendFormat (", {0}{1}", symbol, completors[i, 0]);
 			}
-			sb.AppendLine (string.Format("]', $monodevelop_bindings[{0}])", line+2));
-		
-			// Console.WriteLine (sb.ToString ());
-			IntPtr raw_completions = rb_eval_string_wrap (sb.ToString (), ref runstatus);
+			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 2));
+
+			IntPtr raw_completions = EvaluateInContext (basepath, lines, sb.ToString (), line, ref runstatus);
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
 				rb_eval_string_wrap ("puts($!)", ref runstatus);
 				return new ICompletionData[0];
 			}
 			
+			completions = new List<ICompletionData> ();
 			for (int i=0; i<completors.GetLength(0); ++i) {
 				rb_iterate (IterateCompletions, rb_ary_entry (raw_completions, i+1), delegate(IntPtr completion, IntPtr z){
 					AddCompletion (completion, completors[i,1]);
@@ -197,6 +239,25 @@ namespace MonoDevelop.RubyBinding
 			
 			return rv;
 		}// CompleteSymbol
+
+		static IntPtr EvaluateInContext (string basepath, IList<string> lines, string expression, int line, ref int runstatus) {
+			StringBuilder sb = new StringBuilder ();
+			sb.AppendLine (string.Format ("$LOAD_PATH << '{0}'", basepath));
+			sb.AppendLine ("$baseline = __LINE__-1");
+			sb.AppendLine ("$monodevelop_bindings = {}");
+			sb.AppendLine ("set_trace_func(proc{|event,file,line,id,binding,klass| if('line'==event && __FILE__==file) then $monodevelop_bindings[line-$baseline]=binding; end})");
+			
+			foreach (string linestr in lines) {
+				sb.AppendLine (linestr);
+			}
+			sb.AppendLine (expression);
+			
+			// Console.WriteLine (sb.ToString ());
+			IntPtr result = rb_eval_string_wrap (sb.ToString (), ref runstatus);
+			int localstatus = 0;
+			rb_eval_string_wrap ("$LOAD_PATH.slice!(-1)", ref localstatus);
+			return result;
+		}
 		
 		public static List<ICompletionData> completions;
 		

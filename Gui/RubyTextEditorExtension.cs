@@ -44,15 +44,15 @@ namespace MonoDevelop.RubyBinding
 			CompletionDataList cdl = new CompletionDataList ();
 			if ('.' == completionChar) {
 				string contents = Editor.Text,
-				       symbol = GetSymbol (contents, completionContext);
-				Console.WriteLine ("RubyBinding: Completing {0}", symbol);
+				       symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
+				// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
 					string basepath = (null == Document.Project)? 
 						Document.FileName.FullPath.ParentDirectory: 
 						Document.Project.BaseDirectory.FullPath;
 					ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
 					if (null != completions) {
-						Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
+						// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 						cdl.AddRange (completions);
 					}
 				}
@@ -72,27 +72,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
-			return null;
-		}
-		
-		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(' };
-		private static string GetSymbol (string contents, ICodeCompletionContext context)
-		{
-			if (string.IsNullOrEmpty (contents) || 0 == context.TriggerOffset) { 
-				Console.WriteLine ("RubyBinding: Empty contents or zero trigger offset {0}", context.TriggerOffset);
-				return string.Empty; 
-			}
-			
-			int start = contents.LastIndexOfAny (wordBreakChars, context.TriggerOffset-1)+1,
-			    end = contents.IndexOfAny (wordBreakChars, context.TriggerOffset-1)-1;
-			
-			if (0 > start){ start = 0; }
-			if (0 > end){ end = contents.Length; }
-			if (end < start){ end = start; }
-			
-			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
-			
-			return contents.Substring (start, end-start);
+			return ((char.IsWhiteSpace (completionChar) || '(' == completionChar))? new ParameterDataProvider (Document, completionContext): null;
 		}
 	}
 }

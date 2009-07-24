@@ -39,6 +39,8 @@ namespace MonoDevelop.RubyBinding
 		static string[] scopeBeginners = new string[] {
 			"begin", "case", "do", "for", "if",  "module", "while", "unless", "until"
 		};
+		
+		// Manually detect certain types of statements
 		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>[\w\*\+=></^&\|%~\?\!\]\[-][\w\d\*\+=></^&\|%~\?\!\]\[-]*)", RegexOptions.Compiled);
 		static Regex classDefinition = new Regex (@"^\s*class\s+([A-Z][\w\d]*::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
 		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
@@ -73,7 +75,7 @@ namespace MonoDevelop.RubyBinding
 					doc.Add (err); 
 				}
 				return doc;
-			}
+			}// Got parse errors - flag and return with last successful parse result
 				
 			lock (this) {
 				string[] lines = content.Split (new string[]{Environment.NewLine}, StringSplitOptions.None);
@@ -98,8 +100,8 @@ namespace MonoDevelop.RubyBinding
 				}// Add global methods
 				
 				return successfulParses[fileName] = doc;
-			}
-		}
+			}// Populate dom/cu for quickfinder
+		}// Parse
 		
 		/// <summary>
 		/// Populate methods and classes dictionaries from content lines
@@ -169,7 +171,7 @@ namespace MonoDevelop.RubyBinding
 			}// stack imbalance
 			
 			return (0 == stack.Count);
-		}
+		}// RunStack
 		
 		/// <summary>
 		/// Populate a compilation unit with classes
@@ -218,6 +220,6 @@ namespace MonoDevelop.RubyBinding
 				this.name = name;
 				this.declaration = declaration;
 			}
-		}
-	}
+		}// RubyDeclaration
+	}// RubyDocumentParser
 }

@@ -59,5 +59,5 @@ namespace MonoDevelop.RubyBinding
 		}
 		
 		#endregion
-	}
+	}// RubyProjectBinding
 }

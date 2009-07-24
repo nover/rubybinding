@@ -31,6 +31,12 @@ using MonoDevelop.Core.Gui.Dialogs;
 
 namespace MonoDevelop.RubyBinding
 {
+	/// <summary>
+	/// Panel for Ruby-specific options
+	/// </summary>
+	/// <remarks>
+	/// Currently limited to startup selection
+	/// </remarks>
 	[System.ComponentModel.ToolboxItem(true)]
 	public partial class GeneralOptionsPanel : Gtk.Bin
 	{

@@ -71,7 +71,7 @@ namespace MonoDevelop.RubyBinding
 		}
 		
 		protected override void DoExecute (IProgressMonitor monitor,
-										   ExecutionContext context,
+		                                   ExecutionContext context,
 		                                   string configuration)
 		{
 			RubyProjectConfiguration conf = (RubyProjectConfiguration)GetConfiguration (configuration);
@@ -102,6 +102,6 @@ namespace MonoDevelop.RubyBinding
 				operationMonitor.Dispose ();			
 				console.Dispose ();
 			}
-		}
-	}
+		}// DoExecute
+	}// RubyProject
 }

@@ -58,8 +58,9 @@ namespace MonoDevelop.RubyBinding
 				}
 			}
 			
+			// Zero-length list causes segfault
 			return (0 < cdl.Count)? cdl: null;
-		}
+		}// HandleCodeCompletion
 		
 		public override ICompletionDataList CodeCompletionCommand (ICodeCompletionContext completionContext)
 		{
@@ -68,11 +69,11 @@ namespace MonoDevelop.RubyBinding
 				return HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0]);
 			}
 			return null;
-		}
+		}// CodeCompletionCommand
 		
 		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
 			return ((char.IsWhiteSpace (completionChar) || '(' == completionChar))? new ParameterDataProvider (Document, completionContext): null;
 		}
-	}
+	}// RubyTextEditorExtension
 }

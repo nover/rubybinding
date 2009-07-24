@@ -36,6 +36,9 @@ using MonoDevelop.Projects.Gui.Completion;
 
 namespace MonoDevelop.RubyBinding
 {
+	/// <summary>
+	/// Utility class for performing low-level ruby completion tasks
+	/// </summary>
 	public class RubyCompletion
 	{
 #if false
@@ -96,11 +99,33 @@ namespace MonoDevelop.RubyBinding
 			{".constants", Stock.Literal },
 			{".class_variables", Stock.Field }
 		};
+		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(', '.' };
 		
 		// Don't complete operators
 		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
 		static Regex errorMessage = new Regex (@"^[^:]*:(?<line>\d+):\s*(?<message>.*)", RegexOptions.Compiled);
 		
+		// Accumulator for completion iterator
+		public static List<ICompletionData> completions;
+		
+		/// <summary>
+		/// Get contextual completions for a symbol.
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: The contents of the file
+		/// </param>
+		/// <param name="symbol">
+		/// A <see cref="System.String"/>: The name of the symbol to complete
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
+		/// </param>
+		/// <returns>
+		/// A <see cref="ICompletionData[]"/>
+		/// </returns>
 		public static ICompletionData[] Complete (string basepath, string contents, string symbol, int line)
 		{
 			return GuiThreadSync<ICompletionData[]> (delegate() {
@@ -115,6 +140,18 @@ namespace MonoDevelop.RubyBinding
 			});
 		}
 		
+		/// <summary>
+		/// Checks a code snippet for errors
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: The code snippet
+		/// </param>
+		/// <returns>
+		/// A <see cref="List<Error>"/>
+		/// </returns>
 		public static List<Error> CheckForErrors (string basepath, string contents)
 		{
 			return GuiThreadSync<List<Error>> (delegate() {
@@ -148,6 +185,27 @@ namespace MonoDevelop.RubyBinding
 			});
 		}
 		
+		/// <summary>
+		/// Get a list of arguments for a given method.
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: Code to supply a context
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line of contents for the context to be used
+		/// </param>
+		/// <param name="owner">
+		/// A <see cref="System.String"/>: The "owner" of the method (class, module, etc.)
+		/// </param>
+		/// <param name="method">
+		/// A <see cref="System.String"/>: The method name
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String[]"/>: The array of parameters
+		/// </returns>
 		public static string[] GetMethodArguments (string basepath, string contents, int line, string owner, string method)
 		{
 			Console.WriteLine ("GetMethodArguments({0},contents,{1},{2},{3})", basepath, line, owner, method);
@@ -170,8 +228,9 @@ namespace MonoDevelop.RubyBinding
 			return ParamsFromArity (arity);
 		}// GetMethodArguments
 		
-		
-		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(', '.' };
+		/// <summary>
+		/// Gets the symbol containing a given offset in a given string.
+		/// </summary>
 		internal static string GetSymbol (string contents, int offset)
 		{
 			if (string.IsNullOrEmpty (contents) || 0 == offset) { 
@@ -191,8 +250,17 @@ namespace MonoDevelop.RubyBinding
 			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
 			
 			return contents.Substring (start, end-start);
-		}
+		}// GetSymbol
 		
+		/// <summary>
+		/// Generates a parameter array from a method arity.
+		/// </summary>
+		/// <param name="arity">
+		/// A <see cref="System.Int32"/>: As returned by Method#arity
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String[]"/>
+		/// </returns>
 		static string[] ParamsFromArity (int arity)
 		{
 			List<string> theparams = new List<string> ();
@@ -207,6 +275,27 @@ namespace MonoDevelop.RubyBinding
 			return theparams.ToArray ();
 		}// ParamsFromArity
 		
+		/// <summary>
+		/// Get contextual completions for a symbol.
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: The contents of the file
+		/// </param>
+		/// <param name="symbol">
+		/// A <see cref="System.String"/>: The name of the symbol to complete
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
+		/// </param>
+		/// <param name="completors">
+		/// A <see cref="System.String[,]"/>: Ruby methods to invoke for each valid completion type
+		/// </param>
+		/// <returns>
+		/// A <see cref="ICompletionData[]"/>
+		/// </returns>
 		static ICompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
 		{
 			ICompletionData[] rv = null;
@@ -244,6 +333,27 @@ namespace MonoDevelop.RubyBinding
 			return rv;
 		}// CompleteSymbol
 
+		/// <summary>
+		/// Evaluate an expression in a given context
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="lines">
+		/// A <see cref="IList<System.String>"/>: The content for context
+		/// </param>
+		/// <param name="expression">
+		/// A <see cref="System.String"/>: The expression to evaluate
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line (of lines) to use for context
+		/// </param>
+		/// <param name="runstatus">
+		/// A <see cref="System.Int32"/>: Evaluation status to pass out
+		/// </param>
+		/// <returns>
+		/// A <see cref="IntPtr"/>: The ruby VALUE resulting from evaluating expression
+		/// </returns>
 		static IntPtr EvaluateInContext (string basepath, IList<string> lines, string expression, int line, ref int runstatus) {
 			StringBuilder sb = new StringBuilder ();
 			sb.AppendLine (string.Format ("$LOAD_PATH << '{0}'", basepath));
@@ -261,10 +371,18 @@ namespace MonoDevelop.RubyBinding
 			int localstatus = 0;
 			rb_eval_string_wrap ("$LOAD_PATH.slice!(-1)", ref localstatus);
 			return result;
-		}
+		}// EvaluateInContext
 		
-		public static List<ICompletionData> completions;
 		
+		/// <summary>
+		/// A method for adding a completion result from a yielded name.
+		/// </summary>
+		/// <param name="completion">
+		/// A <see cref="IntPtr"/>: The name yielded to the ruby block.
+		/// </param>
+		/// <param name="icon">
+		/// A <see cref="System.String"/>: The appropriate icon for the completion.
+		/// </param>
 		static void AddCompletion (IntPtr completion, string icon)
 		{
 			string name = FromRubyString (completion);
@@ -274,11 +392,17 @@ namespace MonoDevelop.RubyBinding
 			}
 		}// AddCompletion
 		
+		/// <summary>
+		/// A glue method for iterating a ruby collection.
+		/// </summary>
 		public static IntPtr IterateCompletions (IntPtr collection)
 		{
 			return rb_funcall(collection, rb_intern("each"), 0);
 		}// IterateCompletions
 		
+		/// <summary>
+		/// Gets a managed string from a returned ruby string.
+		/// </summary>
 		static string FromRubyString (IntPtr rubyval)
 		{
 			if (IntPtr.Zero == rubyval || Qnil == rubyval){ return string.Empty; }
@@ -313,6 +437,8 @@ namespace MonoDevelop.RubyBinding
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
 		public delegate ICompletionData[] CompleteFunction (string basepath, string contents, string symbol, int line);
+		
+		#region " Ruby native methods "
 		
 		[DllImport("ruby1.8")]
 		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
@@ -363,5 +489,8 @@ namespace MonoDevelop.RubyBinding
 		public static extern IntPtr rb_ary_entry (IntPtr array, int index);
 		
 		public static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
+		
+		#endregion
+		
 	}// RubyCompletion
 }

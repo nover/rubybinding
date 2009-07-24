@@ -25,6 +25,9 @@ using MonoDevelop.Projects.Gui.Completion;
 
 namespace MonoDevelop.RubyBinding
 {
+	/// <summary>
+	/// Provides method parameter data for tooltip
+	/// </summary>
 	public class ParameterDataProvider: IParameterDataProvider
 	{
 		Document doc;
@@ -68,6 +71,7 @@ namespace MonoDevelop.RubyBinding
 		}// constructor
 
 		#region IParameterDataProvider implementation
+		
 		public int GetCurrentParameterIndex (ICodeCompletionContext ctx)
 		{
 			TextEditor editor = doc.TextEditor;
@@ -90,7 +94,7 @@ namespace MonoDevelop.RubyBinding
 			}
 			
 			return (methodParams.Length >= parameterIndex)? parameterIndex: -1;
-		}
+		}// GetCurrentParameterIndex
 		
 		public string GetMethodMarkup (int overload, string[] parameterMarkup)
 		{
@@ -110,7 +114,8 @@ namespace MonoDevelop.RubyBinding
 		public int OverloadCount {
 			get { return 1; }
 		}
+		
 		#endregion
 	
-	}
+	}// ParameterDataProvider
 }

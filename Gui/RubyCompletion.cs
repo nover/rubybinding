@@ -55,7 +55,7 @@ namespace MonoDevelop.RubyBinding
 #endif
 		static RubyCompletion () {
 			// TODO: Does this always happen on the main thread?
-			DispatchService.GuiDispatch (delegate () {
+			DispatchService.GuiSyncDispatch (delegate () {
 				Console.WriteLine ("Initializing RubyCompletion");
 				string scriptname = "monodevelop_ruby_parser";
 				ruby_init ();
@@ -119,6 +119,7 @@ namespace MonoDevelop.RubyBinding
 		{
 			return GuiThreadSync<List<Error>> (delegate() {
 				int runstatus = 0;
+				Init_stack(ref runstatus);
 				StringBuilder sb = new StringBuilder ();
 				sb.AppendFormat ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine);
 				sb.AppendLine ("(__LINE__-1).to_s");
@@ -140,6 +141,8 @@ namespace MonoDevelop.RubyBinding
 						}
 					}
 				}
+				
+				rb_eval_string_wrap ("$LOAD_PATH.slice!(-1)", ref runstatus);
 				
 				return errors;
 			});
@@ -208,6 +211,7 @@ namespace MonoDevelop.RubyBinding
 		{
 			ICompletionData[] rv = null;
 			int runstatus = 0;
+			Init_stack(ref runstatus);
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
@@ -295,9 +299,13 @@ namespace MonoDevelop.RubyBinding
 		{
 			T result = default (T);
 			
-			DispatchService.GuiSyncDispatch (delegate () {
-				result = realfunction ();
-			});
+			try {
+				DispatchService.GuiSyncDispatch (delegate () {
+					result = realfunction ();
+				});
+			} catch (Exception e) {
+				Console.WriteLine ("RubyCompletion: {0}{1}{2}", e.Message, Environment.NewLine, e.StackTrace);
+			}
 			
 			return result;
 		}// GuiThreadSync
@@ -334,7 +342,7 @@ namespace MonoDevelop.RubyBinding
 		public static extern void ruby_init_loadpath ();
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_init_stack ();
+		public static extern void Init_stack (ref int cval);
 		
 		[DllImport("ruby1.8")]
 		public static extern void ruby_set_argv (int argc, string[] argv);

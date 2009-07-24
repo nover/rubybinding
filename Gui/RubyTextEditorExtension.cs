@@ -58,7 +58,7 @@ namespace MonoDevelop.RubyBinding
 				}
 			}
 			
-			return cdl;
+			return (0 < cdl.Count)? cdl: null;
 		}
 		
 		public override ICompletionDataList CodeCompletionCommand (ICodeCompletionContext completionContext)

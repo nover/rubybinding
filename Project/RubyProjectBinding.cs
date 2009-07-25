@@ -50,7 +50,7 @@ namespace MonoDevelop.RubyBinding
 		{
 			ProjectCreateInformation info = new ProjectCreateInformation ();
 			info.ProjectName = Path.GetFileNameWithoutExtension (sourceFile);
-			info.CombinePath = Path.GetDirectoryName (sourceFile);
+			info.SolutionPath = Path.GetDirectoryName (sourceFile);
 			info.ProjectBasePath = Path.GetDirectoryName (sourceFile);
 			
 			Project project =  new RubyProject (info, null, RubyLanguageBinding.RubyLanguage);

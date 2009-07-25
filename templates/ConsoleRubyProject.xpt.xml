@@ -16,8 +16,6 @@
 	<!-- Template Content -->
 	<Combine name = "${ProjectName}" directory = ".">
 		<Project name = "${ProjectName}" directory = "." type = "Ruby">
-			<Options PauseConsoleOutput = "True" />
-			
 			<Files>
 				<File name = "main.rb"><![CDATA[# created on ${Date} at ${Time}
 

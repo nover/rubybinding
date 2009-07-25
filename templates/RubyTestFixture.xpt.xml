@@ -1,48 +1,38 @@
 <?xml version="1.0"?>
 <Template
 	originator   = "Levi Bard"
-    created      = "08/12/2008"
-    lastModified = "08/12/2008">
+    created      = "07/25/2009"
+    lastModified = "07/25/2009">
 	
 	<!-- Template Header -->
 	<TemplateConfiguration>
 		<_Name>Test Fixture</_Name>
-		<_Category>Vala</_Category>
-		<Icon>md-project-console|res:vala-icon-32.png</Icon>
-		<LanguageName>Vala</LanguageName>
-		<_Description>Creates a Vala test fixture.</_Description>
+		<_Category>Ruby</_Category>
+		<Icon>md-project-console|res:MonoDevelop.RubyBinding.icons.ruby-icon-32.png</Icon>
+		<LanguageName>Ruby</LanguageName>
+		<_Description>Creates a Ruby test fixture.</_Description>
 	</TemplateConfiguration>
 	
 	<!-- Template Content -->
 	<Combine name = "${ProjectName}" directory = ".">
-		<Project name = "${ProjectName}" directory = "." type = "Vala">
-			<Options
-				Target = "Bin"
-				PauseConsoleOutput = "True"
-				CompilerArgs = ""
-				LinkerArgs = ""
-				Packages = "glib-2.0"
-				/>
-			
+		<Project name = "${ProjectName}" directory = "." type = "Ruby">
 			<Files>
-				<File name = "main.vala"><![CDATA[// project created on ${Date} at ${Time}
-using GLib;
+				<File name = "test.rb"><![CDATA[# created on ${Date} at ${Time}
 
-public class MyValaTest: GLib.Object {
-	public static void doTest() {
-		// Test code goes here
-	}
-	
-	public static int main (string[] args) {
-		Test.init(ref args);
-		
-		Test.add_func ("/MyValaTest/MyTest", doTest);
-		
-		Test.run();
-		
-		return 0;
-	}
-}]]></File>
+if(__FILE__ == $0)
+	require 'test/unit'
+
+	class MyRubyTest < Test::Unit::TestCase
+		def setup()
+			# Add setup code here
+		end # setup
+
+		def test_case()
+			assert_not_nil(self)
+		end
+	end
+end
+]]></File>
 			</Files>
 		</Project>
 	</Combine>

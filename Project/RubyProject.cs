@@ -57,6 +57,13 @@ namespace MonoDevelop.RubyBinding
 		{
 			RubyProjectConfiguration conf = new RubyProjectConfiguration ();
 			conf.Name = name;
+			if (string.IsNullOrEmpty (conf.MainFile) && 0 < Files.Count) {
+				foreach (ProjectFile file in Files) {
+					if (RubyLanguageBinding.IsRubyFile (file.Name)) {
+						conf.MainFile = file.FilePath.FullPath;
+					}
+				}
+			}
 			return conf;
 		}
 		
@@ -67,7 +74,8 @@ namespace MonoDevelop.RubyBinding
 		
 		protected override bool OnGetCanExecute (MonoDevelop.Projects.ExecutionContext context, string solutionConfiguration)
 		{
-			return true;
+			RubyProjectConfiguration conf = GetConfiguration (solutionConfiguration) as RubyProjectConfiguration;
+			return (null != conf && !string.IsNullOrEmpty (conf.MainFile));
 		}
 		
 		protected override void DoExecute (IProgressMonitor monitor,

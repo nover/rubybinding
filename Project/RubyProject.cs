@@ -36,6 +36,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using MonoDevelop.Projects;
+using MonoDevelop.Projects.Dom;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Core.ProgressMonitoring;
@@ -128,5 +129,24 @@ namespace MonoDevelop.RubyBinding
 				console.Dispose ();
 			}
 		}// DoExecute
+			
+		protected override BuildResult DoBuild (IProgressMonitor monitor, string itemConfiguration)
+		{
+			BuildResult result = new BuildResult ();
+			List<Error> errors = null;
+			
+			foreach (ProjectFile file in Files) {
+				if (RubyLanguageBinding.IsRubyFile (file.FilePath)) {
+					errors = RubyCompletion.CheckForErrors (file.FilePath.FullPath.ParentDirectory, File.ReadAllText (file.FilePath.FullPath));
+					if (null != errors) {
+						foreach (Error error in errors) {
+							result.AddError (file.FilePath, error.Region.Start.Line, error.Region.Start.Column, string.Empty, error.Message);
+						}
+					}
+				}
+			}
+			
+			return result;
+		}
 	}// RubyProject
 }

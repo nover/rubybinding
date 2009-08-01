@@ -241,7 +241,8 @@ namespace MonoDevelop.RubyBinding
 				return null;
 			}
 			
-			int arity = int.Parse (FromRubyString (arityval));
+			int arity = 0;
+			int.TryParse (FromRubyString (arityval), out arity);
 			// Console.WriteLine ("Got arity {0}", arity);
 			
 			return ParamsFromArity (arity);

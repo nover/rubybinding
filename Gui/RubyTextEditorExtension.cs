@@ -6,20 +6,28 @@
 //
 // Copyright (C) 2009 Levi Bard
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// This source code is licenced under The MIT License:
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
 // 
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
 // 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+
 
 
 using System;
@@ -42,9 +50,14 @@ namespace MonoDevelop.RubyBinding
 		public override ICompletionDataList HandleCodeCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
 			CompletionDataList cdl = new CompletionDataList ();
-			if ('.' == completionChar) {
-				string contents = Editor.Text,
-				       symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
+			string contents = null,
+			       symbol = null;
+			
+			switch (completionChar) {
+			case '.':
+				// Dot operator
+				contents = Editor.Text;
+				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
 				// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
 					string basepath = (null == Document.Project)? 
@@ -56,6 +69,27 @@ namespace MonoDevelop.RubyBinding
 						cdl.AddRange (completions);
 					}
 				}
+				break;
+			case ':':
+				// Scope operator
+				if (1 < completionContext.TriggerOffset && ':' == Editor.GetCharAt (completionContext.TriggerOffset-2)) {
+					contents = Editor.Text;
+					symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-2);
+					string[] tokens = symbol.Split (new string[]{"::"}, StringSplitOptions.None);
+					symbol = (1 < tokens.Length)? string.Join ("::", tokens, 0, tokens.Length-1): tokens[0];
+					// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
+					if (RubyCompletion.IsConstant (symbol)) {
+						string basepath = (null == Document.Project)? 
+							Document.FileName.FullPath.ParentDirectory: 
+							Document.Project.BaseDirectory.FullPath;
+						ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
+						if (null != completions) {
+							// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
+							cdl.AddRange (completions);
+						}
+					}
+				}
+				break;
 			}
 			
 			// Zero-length list causes segfault
@@ -73,7 +107,11 @@ namespace MonoDevelop.RubyBinding
 		
 		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
-			return ((char.IsWhiteSpace (completionChar) || '(' == completionChar))? new ParameterDataProvider (Document, completionContext): null;
+			ParameterDataProvider pdp = null;
+			if (char.IsWhiteSpace (completionChar) || '(' == completionChar) {
+				pdp = new ParameterDataProvider (Document, completionContext);
+			}
+			return (null != pdp && pdp.Valid)? pdp: null;
 		}
 	}// RubyTextEditorExtension
 }

@@ -6,45 +6,60 @@
 //
 // Copyright (C) 2009 Levi Bard
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// This source code is licenced under The MIT License:
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
 // 
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
 // 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 
 
 using System;
+using System.IO;
+using System.Collections;
 using Gtk;
 
 using MonoDevelop.Projects;
 using MonoDevelop.Projects.Gui.Dialogs;
+using MonoDevelop.Core;
+using MonoDevelop.Core.Gui;
 using MonoDevelop.Core.Gui.Dialogs;
 
 namespace MonoDevelop.RubyBinding
 {
 	/// <summary>
-	/// Panel for Ruby-specific options
+	/// Panel for Ruby-specific runtime options
 	/// </summary>
-	/// <remarks>
-	/// Currently limited to startup selection
-	/// </remarks>
 	[System.ComponentModel.ToolboxItem(true)]
 	public partial class GeneralOptionsPanel : Gtk.Bin
 	{
 		RubyProjectConfiguration config;
+		Gtk.ListStore loadpathStore = new Gtk.ListStore (typeof(string));
 		
 		public GeneralOptionsPanel()
 		{
 			this.Build();
+			
+			Gtk.CellRendererText textRenderer = new Gtk.CellRendererText ();
+			
+			loadpathTreeView.Model = loadpathStore;
+			loadpathTreeView.HeadersVisible = false;
+			loadpathTreeView.AppendColumn ("Load Path", textRenderer, "text", 0);
 		}
 		
 		public GeneralOptionsPanel (RubyProject project, RubyProjectConfiguration config): this ()
@@ -67,17 +82,75 @@ namespace MonoDevelop.RubyBinding
 				++count;
 			}
 			projectFilesCB.Active = found;
+			foreach (object path in config.LoadPaths) {
+				if (!string.IsNullOrEmpty ((string)path)) {
+					loadpathStore.AppendValues (path);
+				}
+			}
 			
 			return true;
 		}
 		
 		public bool Store ()
 		{
-			if (null != config) {
-				config.MainFile = projectFilesCB.ActiveText;
-				return true;
+			if (null == config) { return false; }
+			
+			TreeIter iter;
+			string line;
+			
+			config.MainFile = projectFilesCB.ActiveText;
+			config.LoadPaths.Clear ();
+			for (loadpathStore.GetIterFirst (out iter);
+			     loadpathStore.IterIsValid (iter);
+			     loadpathStore.IterNext (ref iter)) {
+				line = (string)loadpathStore.GetValue (iter, 0);
+				if (!string.IsNullOrEmpty (line)){ config.LoadPaths.Add (line); }
 			}
-			return false;
+			return true;
+		}
+
+		protected virtual void loadpathAddEntryChanged (object sender, System.EventArgs e)
+		{
+			addLoadpathButton.Sensitive = Directory.Exists (loadpathAddEntry.Text);
+		}
+
+		protected virtual void loadpathAddButtonClicked (object sender, System.EventArgs e)
+		{
+			string path = loadpathAddEntry.Text;
+			if (!string.IsNullOrEmpty (path)) {
+				loadpathStore.AppendValues (path);
+				loadpathAddEntry.Text = string.Empty;
+			}
+		}
+
+		protected virtual void browseButtonClicked (object sender, System.EventArgs e)
+		{
+			FileChooserDialog fcd = new FileChooserDialog (GettextCatalog.GetString ("Choose Load Path"), null, FileChooserAction.SelectFolder, 
+			                                               Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, Gtk.Stock.Open, Gtk.ResponseType.Ok);
+			try {
+				if (fcd.Run() == (int)ResponseType.Ok) {
+					if (!string.IsNullOrEmpty (fcd.Filename)) {
+						loadpathStore.AppendValues (fcd.Filename);
+					}
+				}
+			} finally {
+				fcd.Destroy ();
+			}
+		}
+
+		protected virtual void removeLoadpathButtonClicked (object sender, System.EventArgs e)
+		{
+			TreeIter iter;
+			if (loadpathTreeView.Selection.GetSelected (out iter)) {
+				loadpathStore.Remove (ref iter);
+			}
+			loadpathTreeViewCursorChanged (sender, e);
+		}
+
+		protected virtual void loadpathTreeViewCursorChanged (object sender, System.EventArgs e)
+		{
+			removeLoadpathButton.Sensitive = (null != loadpathTreeView.Selection && 
+			                                  0 < loadpathTreeView.Selection.CountSelectedRows ());
 		}
 	}
     

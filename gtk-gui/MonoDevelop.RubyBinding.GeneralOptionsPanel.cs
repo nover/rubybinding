@@ -13,21 +13,43 @@ namespace MonoDevelop.RubyBinding {
     
     public partial class GeneralOptionsPanel {
         
+        private Gtk.VBox vbox1;
+        
         private Gtk.HBox hbox3;
         
         private Gtk.Label label2;
         
         private Gtk.ComboBox projectFilesCB;
         
+        private Gtk.Table table2;
+        
+        private Gtk.Button addLoadpathButton;
+        
+        private Gtk.Label label8;
+        
+        private Gtk.Entry loadpathAddEntry;
+        
+        private Gtk.ScrolledWindow scrolledwindow1;
+        
+        private Gtk.TreeView loadpathTreeView;
+        
+        private Gtk.VBox vbox4;
+        
+        private Gtk.Button browseButton;
+        
+        private Gtk.Button removeLoadpathButton;
+        
         protected virtual void Build() {
             Stetic.Gui.Initialize(this);
             // Widget MonoDevelop.RubyBinding.GeneralOptionsPanel
             Stetic.BinContainer.Attach(this);
-            this.WidthRequest = 0;
-            this.HeightRequest = 0;
-            this.Sensitive = false;
+            this.CanFocus = true;
             this.Name = "MonoDevelop.RubyBinding.GeneralOptionsPanel";
             // Container child MonoDevelop.RubyBinding.GeneralOptionsPanel.Gtk.Container+ContainerChild
+            this.vbox1 = new Gtk.VBox();
+            this.vbox1.Name = "vbox1";
+            this.vbox1.Spacing = 6;
+            // Container child vbox1.Gtk.Box+BoxChild
             this.hbox3 = new Gtk.HBox();
             this.hbox3.Name = "hbox3";
             this.hbox3.Spacing = 6;
@@ -49,11 +71,115 @@ namespace MonoDevelop.RubyBinding {
             w2.Position = 1;
             w2.Expand = false;
             w2.Fill = false;
-            this.Add(this.hbox3);
+            this.vbox1.Add(this.hbox3);
+            Gtk.Box.BoxChild w3 = ((Gtk.Box.BoxChild)(this.vbox1[this.hbox3]));
+            w3.Position = 0;
+            w3.Expand = false;
+            w3.Fill = false;
+            // Container child vbox1.Gtk.Box+BoxChild
+            this.table2 = new Gtk.Table(((uint)(2)), ((uint)(3)), false);
+            this.table2.Name = "table2";
+            this.table2.RowSpacing = ((uint)(10));
+            this.table2.ColumnSpacing = ((uint)(10));
+            this.table2.BorderWidth = ((uint)(3));
+            // Container child table2.Gtk.Table+TableChild
+            this.addLoadpathButton = new Gtk.Button();
+            this.addLoadpathButton.Sensitive = false;
+            this.addLoadpathButton.CanFocus = true;
+            this.addLoadpathButton.Name = "addLoadpathButton";
+            this.addLoadpathButton.UseStock = true;
+            this.addLoadpathButton.UseUnderline = true;
+            this.addLoadpathButton.Label = "gtk-add";
+            this.table2.Add(this.addLoadpathButton);
+            Gtk.Table.TableChild w4 = ((Gtk.Table.TableChild)(this.table2[this.addLoadpathButton]));
+            w4.LeftAttach = ((uint)(2));
+            w4.RightAttach = ((uint)(3));
+            w4.XOptions = ((Gtk.AttachOptions)(4));
+            w4.YOptions = ((Gtk.AttachOptions)(4));
+            // Container child table2.Gtk.Table+TableChild
+            this.label8 = new Gtk.Label();
+            this.label8.Name = "label8";
+            this.label8.LabelProp = Mono.Unix.Catalog.GetString("Load Path:");
+            this.table2.Add(this.label8);
+            Gtk.Table.TableChild w5 = ((Gtk.Table.TableChild)(this.table2[this.label8]));
+            w5.XOptions = ((Gtk.AttachOptions)(4));
+            w5.YOptions = ((Gtk.AttachOptions)(4));
+            // Container child table2.Gtk.Table+TableChild
+            this.loadpathAddEntry = new Gtk.Entry();
+            this.loadpathAddEntry.CanFocus = true;
+            this.loadpathAddEntry.Name = "loadpathAddEntry";
+            this.loadpathAddEntry.IsEditable = true;
+            this.loadpathAddEntry.InvisibleChar = '●';
+            this.table2.Add(this.loadpathAddEntry);
+            Gtk.Table.TableChild w6 = ((Gtk.Table.TableChild)(this.table2[this.loadpathAddEntry]));
+            w6.LeftAttach = ((uint)(1));
+            w6.RightAttach = ((uint)(2));
+            w6.YOptions = ((Gtk.AttachOptions)(4));
+            // Container child table2.Gtk.Table+TableChild
+            this.scrolledwindow1 = new Gtk.ScrolledWindow();
+            this.scrolledwindow1.CanFocus = true;
+            this.scrolledwindow1.Name = "scrolledwindow1";
+            this.scrolledwindow1.ShadowType = ((Gtk.ShadowType)(1));
+            // Container child scrolledwindow1.Gtk.Container+ContainerChild
+            this.loadpathTreeView = new Gtk.TreeView();
+            this.loadpathTreeView.CanFocus = true;
+            this.loadpathTreeView.Name = "loadpathTreeView";
+            this.scrolledwindow1.Add(this.loadpathTreeView);
+            this.table2.Add(this.scrolledwindow1);
+            Gtk.Table.TableChild w8 = ((Gtk.Table.TableChild)(this.table2[this.scrolledwindow1]));
+            w8.TopAttach = ((uint)(1));
+            w8.BottomAttach = ((uint)(2));
+            w8.LeftAttach = ((uint)(1));
+            w8.RightAttach = ((uint)(2));
+            // Container child table2.Gtk.Table+TableChild
+            this.vbox4 = new Gtk.VBox();
+            this.vbox4.Name = "vbox4";
+            this.vbox4.Spacing = 6;
+            // Container child vbox4.Gtk.Box+BoxChild
+            this.browseButton = new Gtk.Button();
+            this.browseButton.CanFocus = true;
+            this.browseButton.Name = "browseButton";
+            this.browseButton.UseStock = true;
+            this.browseButton.UseUnderline = true;
+            this.browseButton.Label = "gtk-open";
+            this.vbox4.Add(this.browseButton);
+            Gtk.Box.BoxChild w9 = ((Gtk.Box.BoxChild)(this.vbox4[this.browseButton]));
+            w9.Position = 0;
+            w9.Expand = false;
+            w9.Fill = false;
+            // Container child vbox4.Gtk.Box+BoxChild
+            this.removeLoadpathButton = new Gtk.Button();
+            this.removeLoadpathButton.Sensitive = false;
+            this.removeLoadpathButton.CanFocus = true;
+            this.removeLoadpathButton.Name = "removeLoadpathButton";
+            this.removeLoadpathButton.UseStock = true;
+            this.removeLoadpathButton.UseUnderline = true;
+            this.removeLoadpathButton.Label = "gtk-remove";
+            this.vbox4.Add(this.removeLoadpathButton);
+            Gtk.Box.BoxChild w10 = ((Gtk.Box.BoxChild)(this.vbox4[this.removeLoadpathButton]));
+            w10.Position = 1;
+            w10.Expand = false;
+            w10.Fill = false;
+            this.table2.Add(this.vbox4);
+            Gtk.Table.TableChild w11 = ((Gtk.Table.TableChild)(this.table2[this.vbox4]));
+            w11.TopAttach = ((uint)(1));
+            w11.BottomAttach = ((uint)(2));
+            w11.LeftAttach = ((uint)(2));
+            w11.RightAttach = ((uint)(3));
+            w11.XOptions = ((Gtk.AttachOptions)(4));
+            this.vbox1.Add(this.table2);
+            Gtk.Box.BoxChild w12 = ((Gtk.Box.BoxChild)(this.vbox1[this.table2]));
+            w12.Position = 1;
+            this.Add(this.vbox1);
             if ((this.Child != null)) {
                 this.Child.ShowAll();
             }
-            this.Hide();
+            this.Show();
+            this.browseButton.Clicked += new System.EventHandler(this.browseButtonClicked);
+            this.removeLoadpathButton.Clicked += new System.EventHandler(this.removeLoadpathButtonClicked);
+            this.loadpathTreeView.CursorChanged += new System.EventHandler(this.loadpathTreeViewCursorChanged);
+            this.loadpathAddEntry.Changed += new System.EventHandler(this.loadpathAddEntryChanged);
+            this.addLoadpathButton.Clicked += new System.EventHandler(this.loadpathAddButtonClicked);
         }
     }
 }

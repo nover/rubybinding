@@ -5,20 +5,28 @@
 //
 // Copyright (C) 2009 Levi Bard
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// This source code is licenced under The MIT License:
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
 // 
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
 // 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+
 
 
 
@@ -56,8 +64,10 @@ namespace MonoDevelop.RubyBinding
 		 * Operator - (list)
 		 * Variables/method calls/everything elsse
 #endif
-		static RubyCompletion () {
-			// TODO: Does this always happen on the main thread?
+		static bool initialized = false;
+
+		static void initialize () {
+			if (initialized){ return; }
 			DispatchService.GuiSyncDispatch (delegate () {
 				Console.WriteLine ("Initializing RubyCompletion");
 				string scriptname = "monodevelop_ruby_parser";
@@ -65,6 +75,7 @@ namespace MonoDevelop.RubyBinding
 				ruby_script (scriptname);
 				ruby_set_argv (1, new string[]{scriptname});
 				ruby_init_loadpath ();
+				initialized = true;
 				Console.WriteLine ("Done initializing RubyCompletion");
 			});
 		}
@@ -156,11 +167,15 @@ namespace MonoDevelop.RubyBinding
 		{
 			return GuiThreadSync<List<Error>> (delegate() {
 				int runstatus = 0;
-				Init_stack(ref runstatus);
 				StringBuilder sb = new StringBuilder ();
-				sb.AppendFormat ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine);
+				sb.AppendLine (string.Format ("$LOAD_PATH << '{0}'", basepath));
+				sb.AppendLine ("$SAFE = 2");
 				sb.AppendLine ("(__LINE__-1).to_s");
 				int baseline = 0;
+				
+				initialize ();
+				Init_stack(ref runstatus);
+				
 				int.TryParse (FromRubyString (rb_eval_string_wrap (sb.ToString (), ref runstatus)), out baseline);
 				if (0 != runstatus) {
 					rb_eval_string_wrap ("puts($!)", ref runstatus);
@@ -213,13 +228,17 @@ namespace MonoDevelop.RubyBinding
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			string joiner = string.IsNullOrEmpty (owner)? string.Empty: ".";
 			lines[line] = string.Empty;
+			lines.Insert (0, "$SAFE = 2");
+			
+			initialize ();
+			Init_stack (ref runstatus);
 			
 			IntPtr arityval = EvaluateInContext (basepath, lines, string.Format ("{0}{1}method('{2}').arity.to_s", owner, joiner, method), line, ref runstatus);
 			
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
 				rb_eval_string_wrap ("puts($!)", ref runstatus);
-				return new string[0];
+				return null;
 			}
 			
 			int arity = int.Parse (FromRubyString (arityval));
@@ -300,18 +319,21 @@ namespace MonoDevelop.RubyBinding
 		{
 			ICompletionData[] rv = null;
 			int runstatus = 0;
-			Init_stack(ref runstatus);
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
+			initialize ();
+			Init_stack(ref runstatus);
+			
 			lines[line] = symbol;
+			lines.Insert (0, "$SAFE = 2");
 			
 			symbol = symbol.Replace ("'", "\\'");
 			sb.Append ("eval('[$!");
 			for (int i=0; i < completors.GetLength (0); ++i) {
 				sb.AppendFormat (", {0}{1}", symbol, completors[i, 0]);
 			}
-			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 2));
+			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 3));
 
 			IntPtr raw_completions = EvaluateInContext (basepath, lines, sb.ToString (), line, ref runstatus);
 			if (0 != runstatus) {
@@ -373,6 +395,13 @@ namespace MonoDevelop.RubyBinding
 			return result;
 		}// EvaluateInContext
 		
+		/// <summary>
+		/// Determines whether a given symbol is a constant
+		/// </summary>
+		public static bool IsConstant (string symbol) 
+		{
+			return (!string.IsNullOrEmpty (symbol) && char.IsUpper (symbol[0]));
+		}// IsConstant
 		
 		/// <summary>
 		/// A method for adding a completion result from a yielded name.
@@ -441,54 +470,54 @@ namespace MonoDevelop.RubyBinding
 		#region " Ruby native methods "
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
+		static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
+		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_each (IntPtr collection);
+//		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_rescue (RubyFunction function, IntPtr arguments, RubyFunction exception_handler, IntPtr handler_arguments);
+//		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_gv_get (string variable_name);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_each (IntPtr collection);
+		static extern IntPtr rb_eval_string_wrap (string eval_text, ref int status);
+		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_rescue (RubyFunction function, IntPtr arguments, RubyFunction exception_handler, IntPtr handler_arguments);
+		static extern IntPtr rb_string_value_cstr (ref IntPtr rb_string);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_gv_get (string variable_name);
+		static extern void ruby_init ();
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_eval_string_wrap (string eval_text, ref int status);
+		static extern void ruby_init_loadpath ();
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
+		static extern void Init_stack (ref int cval);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_string_value_cstr (ref IntPtr rb_string);
+		static extern void ruby_set_argv (int argc, string[] argv);
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_init ();
+		static extern void ruby_script (string scriptname);
+		
+//		[DllImport("ruby1.8")]
+//		static extern void ruby_finalize ();
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_init_loadpath ();
+		static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);
 		
 		[DllImport("ruby1.8")]
-		public static extern void Init_stack (ref int cval);
+		static extern IntPtr rb_intern (string symbol);
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_set_argv (int argc, string[] argv);
+		static extern IntPtr rb_ary_entry (IntPtr array, int index);
 		
-		[DllImport("ruby1.8")]
-		public static extern void ruby_script (string scriptname);
-		
-		[DllImport("ruby1.8")]
-		public static extern void ruby_finalize ();
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_intern (string symbol);
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_ary_entry (IntPtr array, int index);
-		
-		public static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
+		static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
 		
 		#endregion
 		

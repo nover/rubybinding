@@ -45,17 +45,19 @@ namespace MonoDevelop.RubyBinding
 		/// Keywords that increase the scope / require an 'end'
 		/// </summary>
 		static string[] scopeBeginners = new string[] {
-			"begin", "case", "do", "for", "if",  "module", "while", "unless", "until"
+			"begin", "case", "do", "for", "if", "while", "unless", "until"
 		};
 		
 		// Manually detect certain types of statements
 		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>[\w\*\+=></^&\|%~\?\!\]\[-][\w\d\*\+=></^&\|%~\?\!\]\[-]*)", RegexOptions.Compiled);
-		static Regex classDefinition = new Regex (@"^\s*class\s+([A-Z][\w\d]*::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
+		static Regex classDefinition = new Regex (@"^\s*class\s+((?<module>[A-Z][\w\d]*)::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
+		static Regex moduleDefinition = new Regex (@"^\s*module\s+(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
 		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
 		
 		Dictionary<string,ParsedDocument> successfulParses;
 		Dictionary<int,RubyDeclaration> methods;
 		Dictionary<int,RubyDeclaration> classes;
+		Dictionary<int,RubyDeclaration> modules;
 		
 		public RubyDocumentParser (): base (RubyLanguageBinding.RubyLanguage, RubyLanguageBinding.RubyMimeType)
 		{
@@ -90,6 +92,7 @@ namespace MonoDevelop.RubyBinding
 				
 				methods = new Dictionary<int, RubyDeclaration> ();
 				classes = new Dictionary<int, RubyDeclaration> ();
+				modules = new Dictionary<int, RubyDeclaration> ();
 				
 				if (!RunStack (lines)) {
 					return successfulParses.ContainsKey (fileName)? successfulParses[fileName]: new ParsedDocument (fileName);
@@ -99,6 +102,7 @@ namespace MonoDevelop.RubyBinding
 				if(null == doc.CompilationUnit){ doc.CompilationUnit = new CompilationUnit (fileName); }
 				CompilationUnit cu = (CompilationUnit)doc.CompilationUnit;
 				
+				PopulateModules (cu);
 				PopulateClasses (cu);
 				
 				if (0 < methods.Count) {
@@ -149,6 +153,9 @@ namespace MonoDevelop.RubyBinding
 						if (classes.ContainsKey (poppedPair.Key)) {
 							classes[poppedPair.Key].end = i;
 						}// end of class definition
+						if (modules.ContainsKey (poppedPair.Key)) {
+							modules[poppedPair.Key].end = i;
+						}// end of module definition
 					}// only care about method and class definitions
 				}// Scope decrease
 				
@@ -168,9 +175,16 @@ namespace MonoDevelop.RubyBinding
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, method));
 				}// begin method definition
 				else if (null != (match = classDefinition.Match (line)) && match.Success) {
+					if (match.Groups["module"].Success && !string.IsNullOrEmpty (match.Groups["module"].Value)) {
+						modules[i] = new RubyDeclaration (i, i, match.Groups["module"].Value, line);
+					}
 					RubyDeclaration klass = classes[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, klass));
 				}// begin class definition
+				else if (null != (match = moduleDefinition.Match (line)) && match.Success) {
+					RubyDeclaration module = modules[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, module));
+				}// begin module definition
 				++i;
 			}// parse line
 			
@@ -181,8 +195,36 @@ namespace MonoDevelop.RubyBinding
 			return (0 == stack.Count);
 		}// RunStack
 		
+		void PopulateModules (CompilationUnit cu)
+		{
+			foreach (RubyDeclaration module in modules.Values) {
+				PopulateClasses (cu, module);
+			}// Add modules
+		}// PopulateModules
+		
 		/// <summary>
-		/// Populate a compilation unit with classes
+		/// Populate a module with classes
+		/// </summary>
+		void PopulateClasses (CompilationUnit cu, RubyDeclaration parent)
+		{
+			List<int> removal = new List<int> ();
+			
+			foreach (KeyValuePair<int,RubyDeclaration> mpair in classes) {
+				if (mpair.Key >= parent.begin && mpair.Key <= parent.end) {
+					DomType myclass = new DomType (cu, ClassType.Class, mpair.Value.name, new DomLocation (mpair.Value.begin, 1), 
+					                               parent.name, new DomRegion (mpair.Value.begin+1, mpair.Value.end+1), new List<IMember> ());
+					PopulateMethods (myclass);
+					cu.Add (myclass);
+					removal.Add (mpair.Key);
+				}// Add classes that are declared within the parent's scope
+			}// Check detected classes
+			
+			// Remove used classes from map
+			foreach (int key in removal){ classes.Remove (key); }
+		}// PopulateClasses in namespace
+		
+		/// <summary>
+		/// Populate a compilation unit with unparented classes
 		/// </summary>
 		void PopulateClasses (CompilationUnit cu)
 		{
@@ -192,7 +234,7 @@ namespace MonoDevelop.RubyBinding
 				PopulateMethods (myclass);
 				cu.Add (myclass);
 			}// Add classes and member methods
-		}
+		}// PopulateClasses in doc root
 		
 		/// <summary>
 		/// Populate a DomType with methods

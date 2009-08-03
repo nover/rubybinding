@@ -44,6 +44,7 @@ namespace MonoDevelop.RubyBinding
 		public static readonly string RubyLanguage = "Ruby";
 		public static readonly string RubyExtension = ".rb";
 		public static readonly string RubyInterpreter = "ruby";
+		public static readonly string RubyMimeType = "text/x-ruby";
 
 		#region ILanguageBinding implementation
 		

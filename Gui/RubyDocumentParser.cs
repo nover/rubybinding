@@ -57,7 +57,7 @@ namespace MonoDevelop.RubyBinding
 		Dictionary<int,RubyDeclaration> methods;
 		Dictionary<int,RubyDeclaration> classes;
 		
-		public RubyDocumentParser (): base (RubyLanguageBinding.RubyLanguage, "text/x-ruby")
+		public RubyDocumentParser (): base (RubyLanguageBinding.RubyLanguage, RubyLanguageBinding.RubyMimeType)
 		{
 			successfulParses = new Dictionary<string, ParsedDocument> ();
 		}

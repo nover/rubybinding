@@ -113,29 +113,33 @@
 	</Extension>
 	-->
 	
-	<!-- 
 	<Extension path = "/MonoDevelop/Ide/Pads/ClassPad">
 		<NodeBuilder id = "MonoDevelop.RubyBinding.Navigation.ProjectNodeBuilderExtension" class = "MonoDevelop.RubyBinding.Navigation.ProjectNodeBuilderExtension"/>
-		<NodeBuilder id = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder" class = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder"/>
+		<!-- <NodeBuilder id = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder" class = "MonoDevelop.RubyBinding.Navigation.LanguageItemNodeBuilder"/> -->
 	</Extension>
 	
 	<Extension path = "/MonoDevelop/Ide/Commands">
 		<Category _name = "Ruby" id = "Ruby">
-			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.UpdateClassPad" _label = "Update class pad" icon = "res:update" />
+			<Command id = "MonoDevelop.RubyBinding.Navigation.RubyProjectCommands.UpdateClassPad" _label = "Update class pad" icon = "res:update" />
+			<!-- 
 			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.AddPackage" _label = "Edit Packages..." />
 			<Command id = "MonoDevelop.RubyBinding.RubyProjectCommands.ShowPackageDetails" _label = "Details..." />
+			-->
 		</Category>
 	</Extension>
 
+	<!-- 
 	<Extension path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackagesFolderNode">
 		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.AddPackage"/>
 		<CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Paste"/>
 	</Extension>
+	-->
 
 	<Extension path = "/MonoDevelop/Ide/ContextMenu/ClassPad/Project">
-		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.UpdateClassPad"/>
+		<CommandItem id = "MonoDevelop.RubyBinding.Navigation.RubyProjectCommands.UpdateClassPad"/>
 	</Extension>
 	
+	<!-- 
 	<Extension path = "/MonoDevelop/RubyBinding/Views/ProjectBrowser/ContextMenu/PackageNode">
 		<CommandItem id = "MonoDevelop.RubyBinding.RubyProjectCommands.ShowPackageDetails"/>
 		<SeparatorItem id = "Separator1" />

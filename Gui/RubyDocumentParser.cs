@@ -49,7 +49,7 @@ namespace MonoDevelop.RubyBinding
 		};
 		
 		// Manually detect certain types of statements
-		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>[\w\*\+=></^&\|%~\?\!\]\[-][\w\d\*\+=></^&\|%~\?\!\]\[-]*)", RegexOptions.Compiled);
+		static Regex methodDefinition = new Regex (@"^\s*def\s+([\w:][\w\d:]*\.)?(?<name>[\w\*\+=></^&\|%~\?\!\]\[-][\w\d\*\+=></^&\|%~\?\!\]\[-]*)(\s*\(?(?<params>[^{\)]+))?", RegexOptions.Compiled);
 		static Regex classDefinition = new Regex (@"^\s*class\s+((?<module>[A-Z][\w\d]*)::)?(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
 		static Regex moduleDefinition = new Regex (@"^\s*module\s+(?<name>[A-Z][\w\d]*)", RegexOptions.Compiled);
 		static Regex doEndBlock = new Regex (@"[^\w\d]do\s*\|[^\|]+\|(?<end>[^\w\d]end(\s|$))?", RegexOptions.Compiled);
@@ -242,11 +242,20 @@ namespace MonoDevelop.RubyBinding
 		void PopulateMethods (DomType parent)
 		{
 			List<int> removal = new List<int> ();
+			Match match;
+			DomMethod m;
 			
 			foreach (KeyValuePair<int,RubyDeclaration> mpair in methods) {
 				if (mpair.Key > parent.Location.Line && mpair.Key < parent.BodyRegion.End.Line) {
-					parent.Add (new DomMethod (mpair.Value.name, Modifiers.None, MethodModifier.None, new DomLocation (mpair.Value.begin, 1), 
-					                           new DomRegion (mpair.Value.begin+1, mpair.Value.end+1)));
+					parent.Add (m = new DomMethod (mpair.Value.name, Modifiers.None, MethodModifier.None, new DomLocation (mpair.Value.begin, 1), 
+					                           new DomRegion (mpair.Value.begin+1, mpair.Value.end+1), new DomReturnType (string.Empty)));
+					match = methodDefinition.Match (mpair.Value.declaration);
+					if (match.Groups["params"].Success) {
+						foreach (string param in match.Groups["params"].Value.Split (new char[]{',',' ','\t'}, StringSplitOptions.RemoveEmptyEntries)) {
+							m.Add (new DomParameter (m, param, new DomReturnType (param)));
+						}
+					}
+					
 					removal.Add (mpair.Key);
 				}// Add methods that are declared within the parent's scope
 			}// Check detected methods

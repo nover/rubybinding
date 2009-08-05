@@ -100,6 +100,7 @@ namespace MonoDevelop.RubyBinding.Navigation
 			
 			DispatchService.GuiDispatch (delegate () {
 				foreach (ProjectFile file in p.Files) {
+					if (!docs.ContainsKey (file)){ return; }
 					foreach (DomType type in docs[file].CompilationUnit.Types) {
 						builder.AddChild (type);
 					}

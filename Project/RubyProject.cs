@@ -103,7 +103,7 @@ namespace MonoDevelop.RubyBinding
 				if (!string.IsNullOrEmpty ((string)path)){ loadPaths.Add ((string)path); }
 			}
  			
-			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile, BaseDirectory, 
+			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile, BaseDirectory.FullPath, 
 			                                                   new Dictionary<string,string>(){{"RUBYLIB", string.Join (Path.DirectorySeparatorChar.ToString(), loadPaths.ToArray ()) }});
 			
 			monitor.Log.WriteLine ("Running {0} {1}", RubyLanguageBinding.RubyInterpreter, conf.MainFile);

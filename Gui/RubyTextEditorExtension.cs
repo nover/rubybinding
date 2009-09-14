@@ -47,7 +47,7 @@ namespace MonoDevelop.RubyBinding
 			return (Path.GetExtension (doc.FileName).Equals (RubyLanguageBinding.RubyExtension, StringComparison.OrdinalIgnoreCase));
 		}
 		
-		public override ICompletionDataList HandleCodeCompletion (ICodeCompletionContext completionContext, char completionChar)
+		public override ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar)
 		{
 			CompletionDataList cdl = new CompletionDataList ();
 			string contents = null,
@@ -96,7 +96,7 @@ namespace MonoDevelop.RubyBinding
 			return (0 < cdl.Count)? cdl: null;
 		}// HandleCodeCompletion
 		
-		public override ICompletionDataList CodeCompletionCommand (ICodeCompletionContext completionContext)
+		public override ICompletionDataList CodeCompletionCommand (CodeCompletionContext completionContext)
 		{
 			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
 				int pos = completionContext.TriggerOffset;
@@ -105,7 +105,7 @@ namespace MonoDevelop.RubyBinding
 			return null;
 		}// CodeCompletionCommand
 		
-		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
+		public override  IParameterDataProvider HandleParameterCompletion (CodeCompletionContext completionContext, char completionChar)
 		{
 			ParameterDataProvider pdp = null;
 			if (char.IsWhiteSpace (completionChar) || '(' == completionChar) {

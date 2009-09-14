@@ -44,7 +44,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public bool Valid{ get; protected set; }
 		
-		public ParameterDataProvider (Document doc, ICodeCompletionContext context)
+		public ParameterDataProvider (Document doc, CodeCompletionContext context)
 		{
 			this.doc = doc;
 			
@@ -82,7 +82,7 @@ namespace MonoDevelop.RubyBinding
 
 		#region IParameterDataProvider implementation
 		
-		public int GetCurrentParameterIndex (ICodeCompletionContext ctx)
+		public int GetCurrentParameterIndex (CodeCompletionContext ctx)
 		{
 			TextEditor editor = doc.TextEditor;
 			int cursor = editor.CursorPosition;

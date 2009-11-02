@@ -3,7 +3,7 @@
 	Originator="Levi Bard"
 	Language="Ruby"
 	Created="06/13/2009"
-	LastModified="06/13/2009">
+	LastModified="10/03/2009">
 	
 	<TemplateConfiguration>
 		<_Name>Empty Ruby Source File</_Name>
@@ -14,7 +14,14 @@
 	</TemplateConfiguration>
 	
 	<TemplateFiles>
-		<File DefaultExtension=".rb" DefaultName="EmptyRubySourceFile"/>
+		<File DefaultExtension=".rb" DefaultName="EmptyRubySourceFile">
+<![CDATA[# created on ${Date} at ${Time}
+
+if(__FILE__ == $0)
+
+end
+]]>
+		</File>
 	</TemplateFiles>
 	
 	<FileOptions/>

@@ -81,7 +81,7 @@ namespace MonoDevelop.RubyBinding
 				    successfulParses[fileName]: 
 				    new ParsedDocument (fileName);
 				foreach (Error err in errors) {
-					Console.WriteLine ("RubyDocumentParser: Error {0}:{1} {2}", fileName, err.Region.Start.Line, err.Message);
+					// Console.WriteLine ("RubyDocumentParser: Error {0}:{1} {2}", fileName, err.Region.Start.Line, err.Message);
 					doc.Add (err); 
 				}
 				return doc;
@@ -140,7 +140,7 @@ namespace MonoDevelop.RubyBinding
 				if (line.StartsWith ("end", StringComparison.Ordinal) && 
 				    (3 == line.Length || !char.IsLetterOrDigit (line[3]))) { 
 					if (0 == stack.Count){ 
-						Console.WriteLine ("RubyDocumentParser: Popping empty stack at {0}", i);
+						// Console.WriteLine ("RubyDocumentParser: Popping empty stack at {0}", i);
 						return false; 
 					}// stack imbalance
 					
@@ -188,9 +188,9 @@ namespace MonoDevelop.RubyBinding
 				++i;
 			}// parse line
 			
-			if (0 < stack.Count) { 
-				Console.WriteLine ("RubyDocumentParser: {0} extra items on stack", stack.Count);
-			}// stack imbalance
+			// if (0 < stack.Count) { 
+			// 	Console.WriteLine ("RubyDocumentParser: {0} extra items on stack", stack.Count);
+			// }// stack imbalance
 			
 			return (0 == stack.Count);
 		}// RunStack

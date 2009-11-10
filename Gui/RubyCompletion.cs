@@ -38,6 +38,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+using MonoDevelop.Core;
 using MonoDevelop.Core.Gui;
 using MonoDevelop.Projects.Dom;
 using MonoDevelop.Projects.Gui.Completion;
@@ -69,14 +70,14 @@ namespace MonoDevelop.RubyBinding
 		static void initialize () {
 			if (initialized){ return; }
 			DispatchService.GuiSyncDispatch (delegate () {
-				Console.WriteLine ("Initializing RubyCompletion");
+				// Console.WriteLine ("Initializing RubyCompletion");
 				string scriptname = "monodevelop_ruby_parser";
 				ruby_init ();
 				ruby_script (scriptname);
 				ruby_set_argv (1, new string[]{scriptname});
 				ruby_init_loadpath ();
 				initialized = true;
-				Console.WriteLine ("Done initializing RubyCompletion");
+				// Console.WriteLine ("Done initializing RubyCompletion");
 			});
 		}
 		
@@ -223,7 +224,7 @@ namespace MonoDevelop.RubyBinding
 		/// </returns>
 		public static string[] GetMethodArguments (string basepath, string contents, int line, string owner, string method)
 		{
-			Console.WriteLine ("GetMethodArguments({0},contents,{1},{2},{3})", basepath, line, owner, method);
+			// Console.WriteLine ("GetMethodArguments({0},contents,{1},{2},{3})", basepath, line, owner, method);
 			int runstatus = 0;
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			string joiner = string.IsNullOrEmpty (owner)? string.Empty: ".";
@@ -236,8 +237,8 @@ namespace MonoDevelop.RubyBinding
 			IntPtr arityval = EvaluateInContext (basepath, lines, string.Format ("{0}{1}method('{2}').arity.to_s", owner, joiner, method), line, ref runstatus);
 			
 			if (0 != runstatus) {
-				Console.WriteLine ("Evaluation failed: {0}", runstatus);
-				rb_eval_string_wrap ("puts($!)", ref runstatus);
+				// Console.WriteLine ("Evaluation failed: {0}", runstatus);
+				// rb_eval_string_wrap ("puts($!)", ref runstatus);
 				return null;
 			}
 			
@@ -254,20 +255,20 @@ namespace MonoDevelop.RubyBinding
 		internal static string GetSymbol (string contents, int offset)
 		{
 			if (string.IsNullOrEmpty (contents) || 0 == offset) { 
-				Console.WriteLine ("RubyBinding: Empty contents or zero trigger offset {0}", offset);
+				// Console.WriteLine ("RubyBinding: Empty contents or zero trigger offset {0}", offset);
 				return string.Empty; 
 			}
 			
 			int start = contents.LastIndexOfAny (wordBreakChars, offset-1)+1,
 			    end = contents.IndexOfAny (wordBreakChars, offset-1);
 			
-			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
+			// Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
 			
 			if (0 > start){ start = 0; }
 			if (0 > end){ end = contents.Length; }
 			if (end < start){ end = start; }
 			
-			Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
+			// Console.WriteLine ("RubyBinding: Start {0}, End {1}", start, end);
 			
 			return contents.Substring (start, end-start);
 		}// GetSymbol
@@ -338,8 +339,8 @@ namespace MonoDevelop.RubyBinding
 
 			IntPtr raw_completions = EvaluateInContext (basepath, lines, sb.ToString (), line, ref runstatus);
 			if (0 != runstatus) {
-				Console.WriteLine ("Evaluation failed: {0}", runstatus);
-				rb_eval_string_wrap ("puts($!)", ref runstatus);
+				// Console.WriteLine ("Evaluation failed: {0}", runstatus);
+				// rb_eval_string_wrap ("puts($!)", ref runstatus);
 				return new ICompletionData[0];
 			}
 			
@@ -458,7 +459,7 @@ namespace MonoDevelop.RubyBinding
 					result = realfunction ();
 				});
 			} catch (Exception e) {
-				Console.WriteLine ("RubyCompletion: {0}{1}{2}", e.Message, Environment.NewLine, e.StackTrace);
+				LoggingService.LogWarning ("RubyCompletion: {0}{1}{2}", e.Message, Environment.NewLine, e.StackTrace);
 			}
 			
 			return result;

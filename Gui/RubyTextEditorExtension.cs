@@ -49,6 +49,11 @@ namespace MonoDevelop.RubyBinding
 		
 		public override ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar)
 		{
+			return HandleCodeCompletion (completionContext, completionChar, false);
+		}
+		
+		protected virtual ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar, bool forced)
+		{
 			CompletionDataList cdl = new CompletionDataList ();
 			string contents = null,
 			       symbol = null;
@@ -95,9 +100,21 @@ namespace MonoDevelop.RubyBinding
 				string basepath = (null == Document.Project)? 
 					Document.FileName.FullPath.ParentDirectory: 
 					Document.Project.BaseDirectory.FullPath;
-				ICompletionData[] completions = RubyCompletion.CompleteGlobal (basepath, Editor.Text, completionContext.TriggerLine-1);
-				if (null != completions) {
-					cdl.AddRange (completions);
+				string line = Editor.GetLineText (completionContext.TriggerLine);
+				
+				if ((string.IsNullOrEmpty(line) || (string.IsNullOrEmpty (line.Trim ()))) && !forced) {
+					// Don't complete on spacing unless requested
+					break;
+				}
+				
+				contents = Editor.Text;
+				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-2);
+				
+				if (0 > Array.IndexOf (RubyCompletion.declarors, symbol.Trim ())) {
+					ICompletionData[] completions = RubyCompletion.CompleteGlobal (basepath, contents, completionContext.TriggerLine-1);
+					if (null != completions) {
+						cdl.AddRange (completions);
+					}
 				}
 				break;
 			}
@@ -110,7 +127,7 @@ namespace MonoDevelop.RubyBinding
 		{
 			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
 				int pos = completionContext.TriggerOffset;
-				return HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0]);
+				return HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0], true);
 			}
 			return null;
 		}// CodeCompletionCommand

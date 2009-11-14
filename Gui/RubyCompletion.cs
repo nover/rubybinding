@@ -122,7 +122,7 @@ namespace MonoDevelop.RubyBinding
 		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(', '.' };
 		
 		// Don't complete operators
-		static Regex completionResult = new Regex (@"^[@\w:]", RegexOptions.Compiled);
+		static Regex completionResult = new Regex (@"^[@\w:\$]", RegexOptions.Compiled);
 		static Regex errorMessage = new Regex (@"^[^:]*:(?<line>\d+):\s*(?<message>.*)", RegexOptions.Compiled);
 		
 		// Accumulator for completion iterator

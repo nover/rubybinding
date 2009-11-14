@@ -80,8 +80,8 @@ namespace MonoDevelop.RubyBinding
 				ParsedDocument doc = successfulParses.ContainsKey (fileName)? 
 				    successfulParses[fileName]: 
 				    new ParsedDocument (fileName);
+				doc.Errors.Clear ();
 				foreach (Error err in errors) {
-					// Console.WriteLine ("RubyDocumentParser: Error {0}:{1} {2}", fileName, err.Region.Start.Line, err.Message);
 					doc.Add (err); 
 				}
 				return doc;
@@ -187,10 +187,6 @@ namespace MonoDevelop.RubyBinding
 				}// begin module definition
 				++i;
 			}// parse line
-			
-			// if (0 < stack.Count) { 
-			// 	Console.WriteLine ("RubyDocumentParser: {0} extra items on stack", stack.Count);
-			// }// stack imbalance
 			
 			return (0 == stack.Count);
 		}// RunStack

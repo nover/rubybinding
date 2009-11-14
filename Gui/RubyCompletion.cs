@@ -111,6 +111,14 @@ namespace MonoDevelop.RubyBinding
 			{".constants", Stock.Literal },
 			{".class_variables", Stock.Field }
 		};
+		
+		static string[,] global_completors = new string[,] {
+			{"Kernel.methods", Stock.Method },
+			{"Module.constants", Stock.Literal },
+			{"Kernel.global_variables", Stock.Field },
+			{"Kernel.local_variables", Stock.Field },
+		};
+			  
 		public static readonly char[] wordBreakChars = new char[]{ ' ', '\t', '\r', '\n', '\\', '`', '>', '<', '=', ';', '|', '&', '(', '.' };
 		
 		// Don't complete operators
@@ -149,6 +157,28 @@ namespace MonoDevelop.RubyBinding
 				}
 				
 				return new ICompletionData[0];
+			});
+		}
+		
+		/// <summary>
+		/// Return completions for the global context
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: The contents of the file
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
+		/// </param>
+		/// <returns>
+		/// A <see cref="ICompletionData[]"/>
+		/// </returns>
+		public static ICompletionData[] CompleteGlobal (string basepath, string contents, int line)
+		{
+			return GuiThreadSync<ICompletionData[]> (delegate() {
+				return CompleteSymbol (basepath, contents, string.Empty, line, global_completors);
 			});
 		}
 		

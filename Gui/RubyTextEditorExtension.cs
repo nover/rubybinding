@@ -90,6 +90,16 @@ namespace MonoDevelop.RubyBinding
 					}
 				}
 				break;
+			case ' ':
+			case '\t':
+				string basepath = (null == Document.Project)? 
+					Document.FileName.FullPath.ParentDirectory: 
+					Document.Project.BaseDirectory.FullPath;
+				ICompletionData[] completions = RubyCompletion.CompleteGlobal (basepath, Editor.Text, completionContext.TriggerLine-1);
+				if (null != completions) {
+					cdl.AddRange (completions);
+				}
+				break;
 			}
 			
 			// Zero-length list causes segfault

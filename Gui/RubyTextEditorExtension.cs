@@ -102,7 +102,7 @@ namespace MonoDevelop.RubyBinding
 					Document.Project.BaseDirectory.FullPath;
 				string line = Editor.GetLineText (completionContext.TriggerLine);
 				
-				if ((string.IsNullOrEmpty(line) || (string.IsNullOrEmpty (line.Trim ()))) && !forced) {
+				if ((null == line || (string.IsNullOrEmpty (line.Trim ()))) && !forced) {
 					// Don't complete on spacing unless requested
 					break;
 				}

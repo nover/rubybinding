@@ -84,7 +84,7 @@ namespace MonoDevelop.RubyBinding
 			return false;
 		}
 		
-		protected override bool OnGetCanExecute (MonoDevelop.Projects.ExecutionContext context, string solutionConfiguration)
+		protected override bool OnGetCanExecute (MonoDevelop.Projects.ExecutionContext context, ConfigurationSelector solutionConfiguration)
 		{
 			RubyProjectConfiguration conf = GetConfiguration (solutionConfiguration) as RubyProjectConfiguration;
 			return (null != conf && !string.IsNullOrEmpty (conf.MainFile));
@@ -92,7 +92,7 @@ namespace MonoDevelop.RubyBinding
 		
 		protected override void DoExecute (IProgressMonitor monitor,
 		                                   ExecutionContext context,
-		                                   string configuration)
+		                                   ConfigurationSelector configuration)
 		{
 			RubyProjectConfiguration conf = (RubyProjectConfiguration)GetConfiguration (configuration);
 			bool pause = conf.PauseConsoleOutput;
@@ -130,7 +130,7 @@ namespace MonoDevelop.RubyBinding
 			}
 		}// DoExecute
 			
-		protected override BuildResult DoBuild (IProgressMonitor monitor, string itemConfiguration)
+		protected override BuildResult DoBuild (IProgressMonitor monitor, ConfigurationSelector itemConfiguration)
 		{
 			BuildResult result = new BuildResult ();
 			List<Error> errors = null;

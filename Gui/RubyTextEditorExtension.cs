@@ -58,10 +58,16 @@ namespace MonoDevelop.RubyBinding
 		
 		public override ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar)
 		{
-			return HandleCodeCompletion (completionContext, completionChar, false);
+			int triggerWordLength = 0;
+			return HandleCodeCompletion (completionContext, completionChar, false, ref triggerWordLength);
 		}
 		
-		protected virtual ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar, bool forced)
+		public override ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar, ref int triggerWordLength)
+		{
+			return HandleCodeCompletion (completionContext, completionChar, false, ref triggerWordLength);
+		}
+		
+		protected virtual ICompletionDataList HandleCodeCompletion (CodeCompletionContext completionContext, char completionChar, bool forced, ref int triggerWordLength)
 		{
 			CompletionDataList cdl = new CompletionDataList ();
 			string contents = null,
@@ -122,7 +128,7 @@ namespace MonoDevelop.RubyBinding
 				if (char.IsLetter (completionChar)) {
 					ICompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, Editor.Text, completionContext.TriggerLine-1);
 					cdl.AddRange (completions);
-					ResetTriggerOffset (completionContext);
+					triggerWordLength = ResetTriggerOffset (completionContext);
 				}
 				break;
 			}
@@ -134,14 +140,16 @@ namespace MonoDevelop.RubyBinding
 		/// <summary>
 		/// Move the completion trigger offset to the beginning of the current token
 		/// </summary>
-		protected virtual void ResetTriggerOffset (CodeCompletionContext completionContext)
+		protected virtual int ResetTriggerOffset (CodeCompletionContext completionContext)
 		{
 			int i = completionContext.TriggerOffset;
+			int accumulator = 0;
 			
 			for (;
 			     1 < i && char.IsLetterOrDigit (Editor.GetCharAt (i));
-			     --i);
+			     --i, ++accumulator);
 			completionContext.TriggerOffset = i-1;
+			return accumulator+1;
 		}// ResetTriggerOffset
 		
 		public override ICompletionDataList CodeCompletionCommand (CodeCompletionContext completionContext)
@@ -149,7 +157,7 @@ namespace MonoDevelop.RubyBinding
 			ICompletionDataList completions = null;
 			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
 				int pos = completionContext.TriggerOffset;
-				completions = HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0], true);
+				completions = HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0], true, ref pos);
 			}
 			return completions;
 		}// CodeCompletionCommand

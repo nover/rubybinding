@@ -115,6 +115,8 @@ namespace MonoDevelop.RubyBinding
 					if (null != completions) {
 						cdl.AddRange (completions);
 					}
+				}
+				break;
 			default:
 				// Aggressive completion
 				if (char.IsLetter (completionChar)) {

@@ -148,13 +148,13 @@ namespace MonoDevelop.RubyBinding
 					if (!string.IsNullOrEmpty (poppedPair.Value.name)) {
 						// Console.WriteLine ("Got {0} {1} from {2} to {3}", methods.ContainsKey(poppedPair.Key)? "method": "class", poppedPair.Value, poppedPair.Key, i);
 						if (methods.ContainsKey (poppedPair.Key)) {
-							methods[poppedPair.Key].end = i;
+							methods[poppedPair.Key].endLine = i;
 						}// end of method definition
 						if (classes.ContainsKey (poppedPair.Key)) {
-							classes[poppedPair.Key].end = i;
+							classes[poppedPair.Key].endLine = i;
 						}// end of class definition
 						if (modules.ContainsKey (poppedPair.Key)) {
-							modules[poppedPair.Key].end = i;
+							modules[poppedPair.Key].endLine = i;
 						}// end of module definition
 					}// only care about method and class definitions
 				}// Scope decrease
@@ -162,27 +162,27 @@ namespace MonoDevelop.RubyBinding
 				foreach (string sb in scopeBeginners) {
 					if (line.StartsWith (sb, StringComparison.Ordinal) && !line.EndsWith ("end", StringComparison.Ordinal) &&
 					    (line.Length == sb.Length || char.IsWhiteSpace (line[sb.Length]) || char.IsPunctuation (line[sb.Length]))) {
-						stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, i, string.Empty, line)));
+						stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, aline.Length, i, string.Empty, line)));
 						break;
 					}
 				}// check for unimportant scope increase
 				
 				if (null != (match = doEndBlock.Match (line)) && match.Success && !match.Groups["end"].Success) {
-					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, i, string.Empty, line)));
+					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, new RubyDeclaration (i, aline.Length, i, string.Empty, line)));
 				}// check for do/end-scoped block with inline do
 				else if (null != (match = methodDefinition.Match (line)) && match.Success) {
-					RubyDeclaration method = methods[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					RubyDeclaration method = methods[i] = new RubyDeclaration (i, aline.Length, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, method));
 				}// begin method definition
 				else if (null != (match = classDefinition.Match (line)) && match.Success) {
 					if (match.Groups["module"].Success && !string.IsNullOrEmpty (match.Groups["module"].Value)) {
-						modules[i] = new RubyDeclaration (i, i, match.Groups["module"].Value, line);
+						modules[i] = new RubyDeclaration (i, line.Length+1, i, match.Groups["module"].Value, line);
 					}
-					RubyDeclaration klass = classes[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					RubyDeclaration klass = classes[i] = new RubyDeclaration (i, aline.Length, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, klass));
 				}// begin class definition
 				else if (null != (match = moduleDefinition.Match (line)) && match.Success) {
-					RubyDeclaration module = modules[i] = new RubyDeclaration (i, i, match.Groups["name"].Value, line);
+					RubyDeclaration module = modules[i] = new RubyDeclaration (i, aline.Length, i, match.Groups["name"].Value, line);
 					stack.Push (new KeyValuePair<int,RubyDeclaration> (i, module));
 				}// begin module definition
 				++i;
@@ -206,9 +206,11 @@ namespace MonoDevelop.RubyBinding
 			List<int> removal = new List<int> ();
 			
 			foreach (KeyValuePair<int,RubyDeclaration> mpair in classes) {
-				if (mpair.Key >= parent.begin && mpair.Key <= parent.end) {
-					DomType myclass = new DomType (cu, ClassType.Class, mpair.Value.name, new DomLocation (mpair.Value.begin, 1), 
-					                               parent.name, new DomRegion (mpair.Value.begin+1, mpair.Value.end+1), new List<IMember> ());
+				if (mpair.Key >= parent.beginLine && mpair.Key <= parent.endLine) {
+					DomType myclass = new DomType (cu, ClassType.Class, mpair.Value.name, new DomLocation (mpair.Value.beginLine, 1), 
+					                               parent.name, new DomRegion (mpair.Value.beginLine, mpair.Value.beginColumn+1, 
+					                                                           mpair.Value.endLine, int.MaxValue),
+					                                                           new List<IMember> ());
 					PopulateMethods (myclass);
 					cu.Add (myclass);
 					removal.Add (mpair.Key);
@@ -225,8 +227,9 @@ namespace MonoDevelop.RubyBinding
 		void PopulateClasses (CompilationUnit cu)
 		{
 			foreach (KeyValuePair<int,RubyDeclaration> pair in classes) {
-				DomType myclass = new DomType (cu, ClassType.Class, pair.Value.name, new DomLocation (pair.Value.begin, 1), string.Empty, 
-				                               new DomRegion (pair.Value.begin+1, pair.Value.end+1), new List<IMember> ());
+				DomType myclass = new DomType (cu, ClassType.Class, pair.Value.name, new DomLocation (pair.Value.beginLine, 1), string.Empty, 
+				                               new DomRegion (pair.Value.beginLine, pair.Value.beginColumn+1,
+				                                              pair.Value.endLine, int.MaxValue), new List<IMember> ());
 				PopulateMethods (myclass);
 				cu.Add (myclass);
 			}// Add classes and member methods
@@ -243,8 +246,9 @@ namespace MonoDevelop.RubyBinding
 			
 			foreach (KeyValuePair<int,RubyDeclaration> mpair in methods) {
 				if (mpair.Key > parent.Location.Line && mpair.Key < parent.BodyRegion.End.Line) {
-					parent.Add (m = new DomMethod (mpair.Value.name, Modifiers.None, MethodModifier.None, new DomLocation (mpair.Value.begin, 1), 
-					                           new DomRegion (mpair.Value.begin+1, mpair.Value.end+1), new DomReturnType (string.Empty)));
+					parent.Add (m = new DomMethod (mpair.Value.name, Modifiers.None, MethodModifier.None, new DomLocation (mpair.Value.beginLine, 1), 
+					                           new DomRegion (mpair.Value.beginLine, mpair.Value.beginColumn+1,
+					                                          mpair.Value.endLine, int.MaxValue), new DomReturnType (string.Empty)));
 					match = methodDefinition.Match (mpair.Value.declaration);
 					if (match.Groups["params"].Success) {
 						foreach (string param in match.Groups["params"].Value.Split (new char[]{',',' ','\t'}, StringSplitOptions.RemoveEmptyEntries)) {
@@ -264,14 +268,16 @@ namespace MonoDevelop.RubyBinding
 		/// Helper class for declarations
 		/// </summary>
 		class RubyDeclaration {
-			public int begin;
-			public int end;
+			public int beginLine;
+			public int beginColumn;
+			public int endLine;
 			public string name;
 			public string declaration;
 			
-			public RubyDeclaration (int begin, int end, string name, string declaration) {
-				this.begin = begin;
-				this.end = end;
+			public RubyDeclaration (int beginLine, int beginColumn, int endLine, string name, string declaration) {
+				this.beginLine = beginLine;
+				this.beginColumn = beginColumn;
+				this.endLine = endLine;
 				this.name = name;
 				this.declaration = declaration;
 			}

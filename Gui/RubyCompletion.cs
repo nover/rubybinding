@@ -38,10 +38,11 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+using MonoDevelop.Ide;
 using MonoDevelop.Core;
-using MonoDevelop.Core.Gui;
+using MonoDevelop.Ide.Gui;
 using MonoDevelop.Projects.Dom;
-using MonoDevelop.Projects.Gui.Completion;
+using MonoDevelop.Ide.CodeCompletion;
 
 namespace MonoDevelop.RubyBinding
 {

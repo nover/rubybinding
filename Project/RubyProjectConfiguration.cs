@@ -34,7 +34,7 @@
 using System;
 using System.Collections;
 
-using MonoDevelop.Core.Gui;
+using MonoDevelop.Ide;
 using MonoDevelop.Projects;
 using MonoDevelop.Core.Serialization;
 

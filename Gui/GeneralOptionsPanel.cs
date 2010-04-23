@@ -34,11 +34,9 @@ using System.IO;
 using System.Collections;
 using Gtk;
 
-using MonoDevelop.Projects;
-using MonoDevelop.Projects.Gui.Dialogs;
 using MonoDevelop.Core;
-using MonoDevelop.Core.Gui;
-using MonoDevelop.Core.Gui.Dialogs;
+using MonoDevelop.Ide.Gui.Dialogs;
+using MonoDevelop.Projects;
 
 namespace MonoDevelop.RubyBinding
 {

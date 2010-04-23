@@ -33,10 +33,9 @@
 using System;
 using System.IO;
 
-using MonoDevelop.Core.Gui;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.Ide.Gui.Content;
-using MonoDevelop.Projects.Gui.Completion;
+using MonoDevelop.Ide.CodeCompletion;
 
 namespace MonoDevelop.RubyBinding
 {

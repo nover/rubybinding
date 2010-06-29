@@ -79,7 +79,7 @@ namespace MonoDevelop.RubyBinding
 				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
 				// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
-					ICompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
+					CompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
 					if (null != completions) {
 						// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 						cdl.AddRange (completions);
@@ -95,7 +95,7 @@ namespace MonoDevelop.RubyBinding
 					symbol = (1 < tokens.Length)? string.Join ("::", tokens, 0, tokens.Length-1): tokens[0];
 					// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 					if (RubyCompletion.IsConstant (symbol)) {
-						ICompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
+						CompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
 						if (null != completions) {
 							// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 							cdl.AddRange (completions);
@@ -116,7 +116,7 @@ namespace MonoDevelop.RubyBinding
 				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-2);
 				
 				if (0 > Array.IndexOf (RubyCompletion.declarors, symbol.Trim ())) {
-					ICompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, contents, completionContext.TriggerLine-1);
+					CompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, contents, completionContext.TriggerLine-1);
 					if (null != completions) {
 						cdl.AddRange (completions);
 					}
@@ -125,7 +125,7 @@ namespace MonoDevelop.RubyBinding
 			default:
 				// Aggressive completion
 				if (char.IsLetter (completionChar)) {
-					ICompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, Editor.Text, completionContext.TriggerLine-1);
+					CompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, Editor.Text, completionContext.TriggerLine-1);
 					cdl.AddRange (completions);
 					triggerWordLength = ResetTriggerOffset (completionContext);
 				}

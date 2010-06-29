@@ -131,7 +131,7 @@ namespace MonoDevelop.RubyBinding
 		static Regex errorMessage = new Regex (@"^[^:]*:(?<line>\d+):\s*(?<message>.*)", RegexOptions.Compiled);
 		
 		// Accumulator for completion iterator
-		public static List<ICompletionData> completions;
+		public static List<CompletionData> completions;
 		
 		/// <summary>
 		/// Get contextual completions for a symbol.
@@ -149,11 +149,11 @@ namespace MonoDevelop.RubyBinding
 		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
 		/// </param>
 		/// <returns>
-		/// A <see cref="ICompletionData[]"/>
+		/// A <see cref="CompletionData[]"/>
 		/// </returns>
-		public static ICompletionData[] Complete (string basepath, string contents, string symbol, int line)
+		public static CompletionData[] Complete (string basepath, string contents, string symbol, int line)
 		{
-			return GuiThreadSync<ICompletionData[]> (delegate() {
+			return GuiThreadSync (delegate() {
 				if (0 > Array.IndexOf (reservedWords, symbol) && 0 > Array.IndexOf (operators, symbol)) {
 					foreach (KeyValuePair<Regex,CompleteFunction> pair in symbolTypes) {
 						if (pair.Key.IsMatch (symbol)){ return pair.Value (basepath, contents, symbol, line); }
@@ -161,7 +161,7 @@ namespace MonoDevelop.RubyBinding
 					return CompleteSymbol (basepath, contents, symbol, line, char.IsUpper (symbol[0])? class_completors: instance_completors);
 				}
 				
-				return new ICompletionData[0];
+				return new CompletionData[0];
 			});
 		}
 		
@@ -178,11 +178,11 @@ namespace MonoDevelop.RubyBinding
 		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
 		/// </param>
 		/// <returns>
-		/// A <see cref="ICompletionData[]"/>
+		/// A <see cref="CompletionData[]"/>
 		/// </returns>
-		public static ICompletionData[] CompleteGlobal (string basepath, string contents, int line)
+		public static CompletionData[] CompleteGlobal (string basepath, string contents, int line)
 		{
-			return GuiThreadSync<ICompletionData[]> (delegate() {
+			return GuiThreadSync (delegate() {
 				return CompleteSymbol (basepath, contents, string.Empty, line, global_completors);
 			});
 		}
@@ -350,11 +350,11 @@ namespace MonoDevelop.RubyBinding
 		/// A <see cref="System.String[,]"/>: Ruby methods to invoke for each valid completion type
 		/// </param>
 		/// <returns>
-		/// A <see cref="ICompletionData[]"/>
+		/// A <see cref="CompletionData[]"/>
 		/// </returns>
-		static ICompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
+		static CompletionData[] CompleteSymbol (string basepath, string contents, string symbol, int line, string[,] completors)
 		{
-			ICompletionData[] rv = null;
+			CompletionData[] rv = null;
 			int runstatus = 0;
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
@@ -376,10 +376,10 @@ namespace MonoDevelop.RubyBinding
 			if (0 != runstatus) {
 				// Console.WriteLine ("Evaluation failed: {0}", runstatus);
 				// rb_eval_string_wrap ("puts($!)", ref runstatus);
-				return new ICompletionData[0];
+				return new CompletionData[0];
 			}
 			
-			completions = new List<ICompletionData> ();
+			completions = new List<CompletionData> ();
 			for (int i=0; i<completors.GetLength(0); ++i) {
 				rb_iterate (IterateCompletions, rb_ary_entry (raw_completions, i+1), delegate(IntPtr completion, IntPtr z){
 					AddCompletion (completion, completors[i,1]);
@@ -502,7 +502,7 @@ namespace MonoDevelop.RubyBinding
 		
 		public delegate IntPtr RubyFunction (IntPtr arguments);
 		public delegate IntPtr YieldFunction (IntPtr yield_value, IntPtr extra);
-		public delegate ICompletionData[] CompleteFunction (string basepath, string contents, string symbol, int line);
+		public delegate CompletionData[] CompleteFunction (string basepath, string contents, string symbol, int line);
 		
 		#region " Ruby native methods "
 		

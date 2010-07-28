@@ -463,6 +463,7 @@ namespace MonoDevelop.RubyBinding
 		/// </summary>
 		public static IntPtr IterateCompletions (IntPtr collection)
 		{
+			if (IntPtr.Zero == collection) return IntPtr.Zero;
 			return rb_funcall(collection, rb_intern("each"), 0);
 		}// IterateCompletions
 		

@@ -50,8 +50,8 @@ namespace MonoDevelop.RubyBinding
 			string basepath = (null == doc.Project)? 
 				doc.FileName.FullPath.ParentDirectory: 
 				doc.Project.BaseDirectory.FullPath;
-			string contents = doc.TextEditor.Text;
-			string line = doc.TextEditor.GetLineText (context.TriggerLine);
+			string contents = doc.Editor.Text;
+			string line = doc.Editor.GetLineText (context.TriggerLine);
 			method = RubyCompletion.GetSymbol (contents, context.TriggerOffset-1);
 			int methodIndex = line.IndexOf (method, 0);
 			
@@ -81,10 +81,9 @@ namespace MonoDevelop.RubyBinding
 
 		#region IParameterDataProvider implementation
 		
-		public int GetCurrentParameterIndex (CodeCompletionContext ctx)
+		public int GetCurrentParameterIndex (ICompletionWidget w, CodeCompletionContext ctx)
 		{
-			TextEditor editor = doc.TextEditor;
-			int cursor = editor.CursorPosition;
+			int cursor = doc.Editor.Caret.Offset;
 			int i = ctx.TriggerOffset;
 			
 			if (i > cursor)
@@ -95,7 +94,7 @@ namespace MonoDevelop.RubyBinding
 			int parameterIndex = 1;
 			
 			while (i++ < cursor) {
-				char ch = editor.GetCharAt (i-1);
+				char ch = doc.Editor.Document.GetCharAt (i-1);
 				if (ch == ',')
 					parameterIndex++;
 				else if (ch == ')')

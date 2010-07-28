@@ -156,7 +156,7 @@ namespace MonoDevelop.RubyBinding
 			ICompletionDataList completions = null;
 			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
 				int pos = completionContext.TriggerOffset;
-				completions = HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0], true, ref pos);
+				completions = HandleCodeCompletion(completionContext, Editor.Document.GetTextBetween (pos - 1, pos)[0], true, ref pos);
 			}
 			return completions;
 		}// CodeCompletionCommand

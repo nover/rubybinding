@@ -75,8 +75,8 @@ namespace MonoDevelop.RubyBinding.Navigation
 			
 			foreach (ProjectFile file in p.Files) {
 				if (RubyLanguageBinding.IsRubyFile (file.FilePath)) {
-					docs[file] = ProjectDomService.Parse (file.FilePath.FullPath, file.ContentType,
-					                                              delegate{ return File.ReadAllText (file.FilePath.FullPath); });
+					docs[file] = ProjectDomService.Parse (p, file.FilePath.FullPath, 
+					                                      delegate{ return File.ReadAllText (file.FilePath.FullPath); });
 				}
 			}
 		}

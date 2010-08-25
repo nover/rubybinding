@@ -1,0 +1,8 @@
+<AddinProject appVersion="master">
+	<Project>
+		<AddinFile>bin/Debug/RubyBinding.dll</AddinFile>
+		<BuildFile>RubyBinding.sln</BuildFile>
+		<BuildConfiguration>Debug</BuildConfiguration>
+	</Project>
+</AddinProject>
+

@@ -6,7 +6,12 @@
        url         = "http://www.monodevelop.com"
        description = "Ruby Language binding"
        category    = "Language bindings"
-       version     = "2.4">
+       version     = "2.5">
+
+	<Runtime>
+		<Import assembly="RubyBinding.dll"/>
+		<Import file="RubyBinding.dll.config"/>
+	</Runtime>
 
 	<Dependencies>
 		<Addin id = "Core" version = "2.4"/>

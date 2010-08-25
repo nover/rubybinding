@@ -42,10 +42,10 @@
     <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>glib-sharp-2.0</Package>
     </Reference>
-    <Reference Include="MonoDevelop.Core, Version=2.2.0.0, Culture=neutral">
+    <Reference Include="MonoDevelop.Core, Version=2.4.0.0, Culture=neutral, PublicKeyToken=null">
       <Package>monodevelop</Package>
     </Reference>
-    <Reference Include="MonoDevelop.Ide, Version=2.2.0.0, Culture=neutral">
+    <Reference Include="MonoDevelop.Ide, Version=2.4.0.0, Culture=neutral, PublicKeyToken=null">
       <Package>monodevelop</Package>
     </Reference>
   </ItemGroup>
@@ -91,4 +91,9 @@
       <Properties InternalTargetFrameworkVersion="3.5" />
     </MonoDevelop>
   </ProjectExtensions>
+  <ItemGroup>
+    <None Include="RubyBinding.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

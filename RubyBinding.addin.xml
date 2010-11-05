@@ -171,6 +171,6 @@
 	-->
 	
 	<Extension path = "/MonoDevelop/ProjectModel/DomParser">
-		<Class class = "MonoDevelop.RubyBinding.RubyDocumentParser" id = "RubyDocumentParser" />
+		<Parser class = "MonoDevelop.RubyBinding.RubyDocumentParser" id = "RubyDocumentParser" />
 	</Extension>
 </Addin>

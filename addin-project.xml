@@ -1,5 +1,5 @@
 <AddinProject appVersion="master">
-	<Project>
+	<Project platforms="Mac Linux">
 		<AddinFile>bin/Debug/RubyBinding.dll</AddinFile>
 		<BuildFile>RubyBinding.sln</BuildFile>
 		<BuildConfiguration>Debug</BuildConfiguration>

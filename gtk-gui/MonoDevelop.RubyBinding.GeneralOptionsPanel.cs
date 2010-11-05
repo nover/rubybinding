@@ -109,7 +109,7 @@ namespace MonoDevelop.RubyBinding {
             this.loadpathAddEntry.CanFocus = true;
             this.loadpathAddEntry.Name = "loadpathAddEntry";
             this.loadpathAddEntry.IsEditable = true;
-            this.loadpathAddEntry.InvisibleChar = '●';
+            this.loadpathAddEntry.InvisibleChar = '*';
             this.table2.Add(this.loadpathAddEntry);
             Gtk.Table.TableChild w6 = ((Gtk.Table.TableChild)(this.table2[this.loadpathAddEntry]));
             w6.LeftAttach = ((uint)(1));

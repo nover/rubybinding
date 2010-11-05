@@ -5,9 +5,8 @@
     <target-gtk-version>2.12</target-gtk-version>
   </configuration>
   <import>
-    <widget-library name="../../monodevelop/main/build/bin/MonoDevelop.Core.Gui.dll" />
-    <widget-library name="../../monodevelop/main/build/bin/MonoDevelop.Ide.dll" />
-    <widget-library name="../../monodevelop/main/build/bin/MonoDevelop.Projects.Gui.dll" />
+    <widget-library name="../../../github-repo/monodevelop/main/build/bin/MonoDevelop.Ide.dll" />
+    <widget-library name="../../../github-repo/monodevelop/main/build/bin/Mono.TextEditor.dll" />
     <widget-library name="../bin/Debug/RubyBinding.dll" internal="true" />
   </import>
   <widget class="Gtk.Bin" id="MonoDevelop.RubyBinding.GeneralOptionsPanel" design-size="640 480">

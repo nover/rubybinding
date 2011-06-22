@@ -2,3 +2,5 @@ This is a ruby language binding plugin for monodevelop.
 
 The code has been forked off Levi Bard's ruby-binding located at launchpad:
 https://code.launchpad.net/~taktaktaktaktaktaktaktaktaktak/+junk/RubyBinding
+
+The purpose of this fork is to make the ruby binding work in the upcoming monodevelop 2.6 release and to improve the code-completion

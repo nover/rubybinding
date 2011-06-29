@@ -7,10 +7,16 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		Debug_ruby18|Any CPU = Debug_ruby18|Any CPU
+		Release_ruby18|Any CPU = Release_ruby18|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug_ruby18|Any CPU.ActiveCfg = Debug_ruby18|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug_ruby18|Any CPU.Build.0 = Debug_ruby18|Any CPU
 		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release_ruby18|Any CPU.ActiveCfg = Release_ruby18|Any CPU
+		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release_ruby18|Any CPU.Build.0 = Release_ruby18|Any CPU
 		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05BDA4C0-5EAD-4568-93C0-FF57400CB927}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

@@ -210,7 +210,13 @@ namespace MonoDevelop.RubyBinding
 				int baseline = 0;
 				
 				initialize ();
+#if RUBY18
 				Init_stack(ref runstatus);
+#else
+				ruby_init_stack(ref runstatus);
+#endif
+		
+				ruby_init_stack(ref runstatus);
 				
 				int.TryParse (FromRubyString (rb_eval_string_wrap (sb.ToString (), ref runstatus)), out baseline);
 				if (0 != runstatus) {
@@ -267,7 +273,11 @@ namespace MonoDevelop.RubyBinding
 			lines.Insert (0, "$SAFE = 2");
 			
 			initialize ();
-			Init_stack (ref runstatus);
+#if RUBY18
+				Init_stack(ref runstatus);
+#else
+				ruby_init_stack(ref runstatus);
+#endif
 			
 			IntPtr arityval = EvaluateInContext (basepath, lines, string.Format ("{0}{1}method('{2}').arity.to_s", owner, joiner, method), line, ref runstatus);
 			
@@ -360,7 +370,11 @@ namespace MonoDevelop.RubyBinding
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
 			initialize ();
-			Init_stack(ref runstatus);
+#if RUBY18
+				Init_stack(ref runstatus);
+#else
+				ruby_init_stack(ref runstatus);
+#endif
 			
 			lines[line] = symbol;
 			lines.Insert (0, "$SAFE = 2");
@@ -372,9 +386,12 @@ namespace MonoDevelop.RubyBinding
 			}
 			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 3));
 
+			Console.WriteLine(sb.ToString());
+				
 			IntPtr raw_completions = EvaluateInContext (basepath, lines, sb.ToString (), line, ref runstatus);
-			if (0 != runstatus) {
-				// Console.WriteLine ("Evaluation failed: {0}", runstatus);
+			if (0 != runstatus) 
+			{
+				Console.WriteLine ("Evaluation failed: {0}", runstatus);
 				// rb_eval_string_wrap ("puts($!)", ref runstatus);
 				return new CompletionData[0];
 			}
@@ -387,7 +404,7 @@ namespace MonoDevelop.RubyBinding
 				}, IntPtr.Zero);
 			}
 			rv = completions.ToArray ();
-			// Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
+			Console.WriteLine ("RubyCompletion: Returning {0} completions", completions.Count);
 			
 			return rv;
 		}// CompleteSymbol
@@ -425,7 +442,7 @@ namespace MonoDevelop.RubyBinding
 			}
 			sb.AppendLine (expression);
 			
-			// Console.WriteLine (sb.ToString ());
+			 Console.WriteLine ("EvaluateInContext: {0}", sb.ToString ());
 			IntPtr result = rb_eval_string_wrap (sb.ToString (), ref runstatus);
 			int localstatus = 0;
 			rb_eval_string_wrap ("$LOAD_PATH.slice!(-1)", ref localstatus);
@@ -534,8 +551,13 @@ namespace MonoDevelop.RubyBinding
 		[DllImport("ruby1.8")]
 		static extern void ruby_init_loadpath ();
 		
+#if RUBY18
 		[DllImport("ruby1.8")]
 		static extern void Init_stack (ref int cval);
+#else
+		[DllImport("ruby1.8")]
+		static extern void ruby_init_stack (ref int cval);
+#endif
 		
 		[DllImport("ruby1.8")]
 		static extern void ruby_set_argv (int argc, string[] argv);

@@ -44,6 +44,8 @@ using MonoDevelop.Ide.Gui;
 using MonoDevelop.Projects.Dom;
 using MonoDevelop.Ide.CodeCompletion;
 
+using MonoDevelop.RubyBinding.LowLevel;
+
 namespace MonoDevelop.RubyBinding
 {
 	/// <summary>
@@ -469,7 +471,7 @@ namespace MonoDevelop.RubyBinding
 		static void AddCompletion (IntPtr completion, string icon)
 		{
 			string name = FromRubyString (completion);
-			// Console.WriteLine ("Adding {0} {1}", icon, name);
+			Console.WriteLine ("Adding '{0}' '{1}'", icon, name);
 			if (completionResult.IsMatch (name)) {
 				completions.Add (new CompletionData (name, icon, name, name));
 			}
@@ -490,7 +492,15 @@ namespace MonoDevelop.RubyBinding
 		static string FromRubyString (IntPtr rubyval)
 		{
 			if (IntPtr.Zero == rubyval || Qnil == rubyval){ return string.Empty; }
-			return Marshal.PtrToStringAuto (rb_string_value_cstr (ref rubyval));
+				
+			if(RubyValueHelper.GetType(rubyval) == RubyValueType.RUBY_T_STRING)
+			{
+				return Marshal.PtrToStringAuto (rb_string_value_cstr (ref rubyval));
+			}
+			else
+			{
+				return String.Empty;
+			}
 		}
 		
 		/// <summary>
@@ -580,6 +590,5 @@ namespace MonoDevelop.RubyBinding
 		static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
 		
 		#endregion
-		
 	}// RubyCompletion
 }

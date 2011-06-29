@@ -20,6 +20,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,6 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_ruby18|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,6 +40,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_ruby18|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -47,6 +50,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -89,6 +93,9 @@
     <Compile Include="Navigation\ProjectNodeBuilderExtension.cs" />
     <Compile Include="Gui\CompilationUnitDataProvider.cs" />
     <Compile Include="Gui\DataProvider.cs" />
+    <Compile Include="LowLevel\RBasic.cs" />
+    <Compile Include="LowLevel\RubyValueHelper.cs" />
+    <Compile Include="LowLevel\RubyValueType.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -110,6 +117,7 @@
     <Folder Include="Project\" />
     <Folder Include="Gui\" />
     <Folder Include="Navigation\" />
+    <Folder Include="LowLevel\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="addin-project.xml" />
